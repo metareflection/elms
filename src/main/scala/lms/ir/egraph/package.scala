@@ -1,4 +1,4 @@
-package lms.backends
+package lms.ir
 
 package object egraph {
   type Id = Int

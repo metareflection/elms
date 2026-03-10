@@ -2,23 +2,23 @@ package lms.ir.egraph
 
 import scala.collection.mutable
 
-class EGraph[Op, Data](analysis: Analysis[Op, Data]):
+class EGraph[Data](analysis: Analysis[Data]):
   private val uf = new UnionFind()
-  private val classes = mutable.Map.empty[Id, EClass[Op, Data]]
-  private val hashcons = new HashCons[Op]
-  private val enodeToClass = mutable.Map.empty[ENode[Op], Id]
+  private val classes = mutable.Map.empty[Id, EClass[Data]]
+  private val hashcons = new HashCons
+  private val enodeToClass = mutable.Map.empty[ENode, Id]
   private val worklist = mutable.Queue.empty[Id]
 
-  private def canon(op: Op, children: Vector[Id]): ENode[Op] =
+  private def canon(op: Op, children: Vector[Id]): ENode =
     ENode(op, children.map(uf.find))
 
-  private def canon(node: ENode[Op]): ENode[Op] =
+  private def canon(node: ENode): ENode =
     canon(node.op, node.children)
 
   def find(id: Id): Id =
     uf.find(id)
 
-  def eclass(id: Id): Option[EClass[Op, Data]] =
+  def eclass(id: Id): Option[EClass[Data]] =
     classes.get(uf.find(id))
 
   def data(id: Id): Data =
@@ -43,7 +43,7 @@ class EGraph[Op, Data](analysis: Analysis[Op, Data]):
 
       case None => {
         val id = uf.make()
-        val eclass = new EClass[Op, Data](id, data = analysis.bottom)
+        val eclass = new EClass[Data](id, data = analysis.bottom)
         classes(id) = eclass
 
         eclass.nodes += node
@@ -208,7 +208,7 @@ class EGraph[Op, Data](analysis: Analysis[Op, Data]):
   }
 
   // Merge the classes containing these two enodes (if they exist).
-  def mergeNodes(a: ENode[Op], b: ENode[Op]): Option[Id] =
+  def mergeNodes(a: ENode, b: ENode): Option[Id] =
     val ca = enodeToClass.get(canon(a))
     val cb = enodeToClass.get(canon(b))
     (ca, cb) match {

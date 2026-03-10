@@ -1,10 +1,10 @@
 package lms.ir.egraph
 
-final class Runner[Op, Data](
-    egraph: EGraph[Op, Data],
-    rules: Vector[Rule[Op, Data]],
+final class Runner[Data](
+    egraph: EGraph[Data],
+    rules: Vector[Rule[Data]],
     cfg: Runner.Config = Runner.Config(),
-    scheduler: Scheduler[Op, Data] = Scheduler.roundRobin
+    scheduler: Scheduler[Data] = Scheduler.roundRobin
 ):
   case class Result(iterations: Int, totalApplications: Int, saturated: Boolean)
 

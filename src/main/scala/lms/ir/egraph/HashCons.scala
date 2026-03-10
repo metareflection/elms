@@ -4,16 +4,16 @@ import scala.collection.mutable
 
 class HashCons[Op]:
 
-  private val table = mutable.Map.empty[ENode[Op], Id]
+  private val table = mutable.Map.empty[ENode, Id]
 
-  def get(node: ENode[Op]): Option[Id] =
+  def get(node: ENode): Option[Id] =
     table.get(node)
 
-  def insert(node: ENode[Op], id: Id): Unit =
+  def insert(node: ENode, id: Id): Unit =
     table(node) = id
 
-  def remove(node: ENode[Op]): Unit =
+  def remove(node: ENode): Unit =
     table.remove(node)
 
-  def contains(node: ENode[Op]): Boolean =
+  def contains(node: ENode): Boolean =
     table.contains(node)

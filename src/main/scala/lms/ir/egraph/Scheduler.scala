@@ -1,9 +1,9 @@
 package lms.ir.egraph
 
-trait Scheduler[Op, Data]:
-  def nextBatch(all: Vector[Rule[Op, Data]], iter: Int): Vector[Rule[Op, Data]]
+trait Scheduler[Data]:
+  def nextBatch(all: Vector[Rule[Data]], iter: Int): Vector[Rule[Data]]
 
 object Scheduler:
-  def roundRobin[Op, Data]: Scheduler[Op, Data] =
-    new Scheduler[Op, Data]:
-      def nextBatch(all: Vector[Rule[Op, Data]], iter: Int) = all
+  def roundRobin[Op, Data]: Scheduler[Data] =
+    new Scheduler[Data]:
+      def nextBatch(all: Vector[Rule[Data]], iter: Int) = all

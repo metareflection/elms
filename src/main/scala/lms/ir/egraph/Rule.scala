@@ -1,5 +1,5 @@
 package lms.ir.egraph
 
-trait Rule[Op, Data]:
+trait Rule[Data]:
   def name: String
-  def run(egraph: EGraph[Op, Data]): Boolean
+  def run(egraph: EGraph[Data]): Boolean
