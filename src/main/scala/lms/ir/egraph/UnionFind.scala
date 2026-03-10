@@ -1,4 +1,4 @@
-package lms.backends.egraph
+package lms.ir.egraph
 
 class UnionFind(initial: Int = 16):
 

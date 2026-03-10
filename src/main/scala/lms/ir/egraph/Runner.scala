@@ -1,4 +1,4 @@
-package lms.backends.egraph
+package lms.ir.egraph
 
 final class Runner[Op, Data](
     egraph: EGraph[Op, Data],

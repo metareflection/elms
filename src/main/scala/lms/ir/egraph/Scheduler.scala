@@ -1,4 +1,4 @@
-package lms.backends.egraph
+package lms.ir.egraph
 
 trait Scheduler[Op, Data]:
   def nextBatch(all: Vector[Rule[Op, Data]], iter: Int): Vector[Rule[Op, Data]]

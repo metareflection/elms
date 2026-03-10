@@ -1,4 +1,4 @@
-package lms.backends.egraph
+package lms.ir.egraph
 
 trait Analysis[Op, Data]:
   def bottom: Data
