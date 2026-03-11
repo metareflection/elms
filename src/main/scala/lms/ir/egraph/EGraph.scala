@@ -2,6 +2,8 @@ package lms.ir.egraph
 
 import scala.collection.mutable
 
+import lms.ir.Op
+
 class EGraph[Data](analysis: Analysis[Data]):
   private val uf = new UnionFind()
   private val classes = mutable.Map.empty[Id, EClass[Data]]

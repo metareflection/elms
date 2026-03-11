@@ -2,6 +2,8 @@ package lms.ir.egraph
 
 import scala.collection.mutable
 
+import lms.ir.Op
+
 class EClass[Data](
     val id: Id,
     val nodes: mutable.Set[ENode] = mutable.Set.empty[ENode],
