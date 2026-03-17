@@ -4,8 +4,14 @@ import lms.ir.Op
 
 abstract class Dialect {
   type Exp
+  type Name
+
+  def fresh(): Name
+  def v(name: Name): Exp
+
+  def root(args: Seq[Name])(body: => Exp): Exp
 
   def lift[A:DslType](x: A): Exp
-  def reflect(op: Op, children: Vector[Exp]): Exp
-  def reify(root: Boolean, f: Exp => Exp): Exp
+  def reflect(op: Op, children: Seq[Exp]): Exp
+  def region(f: => Exp): Exp
 }

@@ -3,7 +3,7 @@ package lms.core
 import lms.ir.Op._
 
 trait PrimitiveOps extends Base {
-  def ifThenElse[T](c: Rep[Boolean], t: Rep[T], e: Rep[T]): Rep[T] =
+  def ifThenElse[T](c: Rep[Boolean], t: => Rep[T], e: => Rep[T]): Rep[T] =
     unsafeReflect(IfThenElse, unsafeUnwrap(c), unsafeUnwrap(t), unsafeUnwrap(e))
 
   given __virtualizedBoolConvInternal: Conversion[Rep[Boolean], Boolean] with
