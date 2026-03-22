@@ -2,13 +2,20 @@ package lms.core
 
 import scala.Conversion
 
-import lms.ir
+import lms.ir, ir.Type._
 
-sealed trait Typable[A] {
+sealed abstract class Typable[A] {
   val identity: ir.Type
 }
 
-object Typable {
-  def ofLiftable[A](x: Liftable[A]): Typable[A] =
-    new Typable[A] { val identity = x.identity }
+sealed abstract class Liftable[A] extends Typable[A] {
+  val identity: ir.Type { type T = A }
+}
+
+implicit object LiftInt extends Liftable[Int] {
+  val identity = INT
+}
+
+implicit object LiftBool extends Liftable[Boolean] {
+  val identity = BOOL
 }
