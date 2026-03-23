@@ -1,6 +1,7 @@
 package lms.core
 
-import lms.ir.{Op, Dialect}
+import lms.core.Op
+import lms.ir.Dialect
 
 abstract class Driver extends Base {
   protected val d: Dialect
@@ -12,8 +13,9 @@ abstract class Driver extends Base {
     val name = d.fresh()
     val argty = summon[Typable[A]].identity
     val outty = summon[Typable[B]].identity
-    d.lam(false, Vector((name, argty)), outty) { f(unsafeWrap(d.variable(name))) }
+    d.fun(false, Vector((name, argty)), outty) { f(unsafeWrap(d.variable(name))) }
   }
+  def region[A](exp: => Rep[A]): Rep[A] = unsafeWrap(d.region(exp))
 
   def unsafeWrap[T](exp: Exp): Rep[T] = exp
   def unsafeUnwrap[T](rep: Rep[T]): Exp = rep

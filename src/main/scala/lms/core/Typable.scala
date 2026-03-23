@@ -2,14 +2,14 @@ package lms.core
 
 import scala.Conversion
 
-import lms.ir, ir.Type._
+import Type._
 
 sealed abstract class Typable[A] {
-  val identity: ir.Type
+  val identity: Type
 }
 
 sealed abstract class Liftable[A] extends Typable[A] {
-  val identity: ir.Type { type T = A }
+  val identity: Type { type T = A }
 }
 
 implicit object LiftInt extends Liftable[Int] {

@@ -1,4 +1,4 @@
-package lms.ir
+package lms.core
 
 sealed trait Type {
   type T

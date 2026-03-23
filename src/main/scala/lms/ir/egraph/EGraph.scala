@@ -2,7 +2,7 @@ package lms.ir.egraph
 
 import scala.collection.mutable
 
-import lms.ir.Op
+import lms.core.Op
 
 class EGraph[Data](analysis: Analysis[Data]):
   private val uf = new UnionFind()
