@@ -1,33 +1,23 @@
 package lms.ir.anf
 
-import scala.collection.mutable.Map
-import scala.Function.uncurried
-
-import lms.runtime.Log
+import lms.util.Plumbing
 import lms.core.{Liftable, Type, Op}, Op._
 import lms.ir, ir.Dialect
-import lms.codegen.ast._
+import lms.runtime.Log
+import lms.codegen.ast, ast._
 
 object Anf extends Dialect {
   type Name = Int
 
-  sealed trait Exp
-
-  case class Var(x: Name) extends Exp
-  case class Lam(x: Name, body: Exp) extends Exp
-
-  case class Let(x: Name, e1: Exp)(e2: Exp) extends Exp
-  case class Operation(op: Op, args: Seq[Exp]) extends Exp
-
-  case class Func(args: Seq[(Name, Type)], outty: Type, body: Exp) extends Exp
+  type Exp = ast.Term
 
   var counter: Int = 0
-  val roots: Map[Name, Func] = Map.empty
+  var roots: List[(Name, ast.Function)] = Nil
   var stBlock: List[(Name, Exp)] = Nil
 
   def init(): Unit = {
     counter = 0
-    roots.clear()
+    roots = Nil
   }
 
   def fresh(): Name = {
@@ -36,14 +26,14 @@ object Anf extends Dialect {
     result
   }
 
-  def variable(name: Name): Exp = Var(name)
+  def variable(name: Name): Exp = V(renderName(name))
 
   def collect(tail: => Exp): Exp = {
     stBlock = Nil
     val last = tail
     // uncurry . flip Let
     stBlock.foldLeft(last) { case (e2, (name, e1)) =>
-      Let(name, e1)(e2)
+      Let(renderName(name), e1, e2)
     }
   }
 
@@ -53,20 +43,20 @@ object Anf extends Dialect {
     if (top) then stBlock = Nil
 
     val bodyexp = region(body)
-    val f = Func(args, outty, bodyexp)
+    val f = ast.Function(args.map(Plumbing.onLeft(renderName)), outty, bodyexp)
 
-    if (top) then roots(name) = f
+    if (top) then roots ::= (name, f)
     else stBlock ::= (name, f)
 
     variable(name)
   }
 
   def lift[A: Liftable](x: A): Exp =
-    Operation(Const(summon[Liftable[A]].identity)(x), Nil)
+    ast.E(Const(summon[Liftable[A]].identity)(x), Nil)
 
   def reflect(op: Op, children: Seq[Exp]): Exp = {
     val name = fresh()
-    stBlock ::= (name, Operation(op, children))
+    stBlock ::= (name, ast.E(op, children))
     variable(name)
   }
 
@@ -77,10 +67,14 @@ object Anf extends Dialect {
     result
   }
 
-  def extract(): Program = {
+  def renderName(n: Name): String = s"x$n"
+
+  def extract(): ast.Program = {
     if (!stBlock.isEmpty) {
       val x: Unit =
         Log.warning("INTERNAL BUG: attempted to `extract` with non-empty `stBlock`")
     }
+
+    ast.Program(roots.map(Plumbing.onLeft(renderName)))
   }
 }

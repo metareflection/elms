@@ -7,14 +7,13 @@ package object ast {
 
   case class E(op: Op, children: Seq[Term]) extends Term
   case class V(name: String) extends Term
-  // TODO: Extend this for more complex LHSes
-  case class Assign(lhs: String, rhs: Term) extends Term
+  case class Let(x: String, e1: Term, e2: Term) extends Term
 
   case class Function(
       args: Seq[(String, Type)],
       outty: Type,
-      body: Seq[Term]
-  )
+      body: Term
+  ) extends Term
 
   case class Program(functions: Seq[(String, Function)])
 }
