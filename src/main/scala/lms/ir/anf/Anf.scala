@@ -3,6 +3,7 @@ package lms.ir.anf
 import scala.collection.mutable.Map
 import scala.Function.uncurried
 
+import lms.runtime.Log
 import lms.core.{Liftable, Type, Op}, Op._
 import lms.ir, ir.Dialect
 import lms.codegen.ast._
@@ -40,7 +41,10 @@ object Anf extends Dialect {
   def collect(tail: => Exp): Exp = {
     stBlock = Nil
     val last = tail
-    stBlock.foldRight(last)(uncurried[(Name, Exp), Exp, Exp](Let.apply))
+    // uncurry . flip Let
+    stBlock.foldLeft(last) { case (e2, (name, e1)) =>
+      Let(name, e1)(e2)
+    }
   }
 
   def fun(top: Boolean, args: Seq[(Name, Type)], outty: Type)(body: => Exp): Exp = {
@@ -62,7 +66,7 @@ object Anf extends Dialect {
 
   def reflect(op: Op, children: Seq[Exp]): Exp = {
     val name = fresh()
-    stBlock = stBlock
+    stBlock ::= (name, Operation(op, children))
     variable(name)
   }
 
@@ -73,6 +77,10 @@ object Anf extends Dialect {
     result
   }
 
-  def program: Program = {
+  def extract(): Program = {
+    if (!stBlock.isEmpty) {
+      val x: Unit =
+        Log.warning("INTERNAL BUG: attempted to `extract` with non-empty `stBlock`")
+    }
   }
 }
