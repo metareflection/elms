@@ -1,5 +1,8 @@
 package lms.core
 
+import annotation.implicitNotFound
+
+import lms.runtime.Log
 import lms.core.Op._
 
 trait PrimitiveOps extends Base {
@@ -21,7 +24,14 @@ trait PrimitiveOps extends Base {
     def *(rhs: Rep[Int]): Rep[Int] =
       unsafeReflect(Times, unsafeUnwrap(lhs), unsafeUnwrap(rhs))
 
-  given [T](using CanEqual[T, T]): CanEqual[Rep[T], Rep[T]] = CanEqual.derived
-  given [T](using CanEqual[T, T]): CanEqual[T, Rep[T]] = CanEqual.derived
-  given [T](using CanEqual[T, T]): CanEqual[Rep[T], T] = CanEqual.derived
+  // At the moment, it's very difficult to use `==` for Rep operations.
+  @implicitNotFound("`Rep`s should not be compared using `==`, use `===` instead.")
+  sealed trait NoRepEquals[T]
+
+  given [T: NoRepEquals](using CanEqual[T, T]): CanEqual[Rep[T], Rep[T]] =
+    CanEqual.derived
+  given [T: NoRepEquals](using CanEqual[T, T]): CanEqual[T, Rep[T]] =
+    CanEqual.derived
+  given [T: NoRepEquals](using CanEqual[T, T]): CanEqual[Rep[T], T] =
+    CanEqual.derived
 }
