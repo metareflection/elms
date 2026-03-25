@@ -40,12 +40,12 @@ object Anf extends Dialect {
   def fun(top: Boolean, args: Seq[(Name, Type)], outty: Type)(body: => Exp): Exp = {
     val name = fresh()
 
-    if (top) then stBlock = Nil
+    if top then stBlock = Nil
 
     val bodyexp = region(body)
     val f = ast.Function(args.map(Plumbing.onLeft(renderName)), outty, bodyexp)
 
-    if (top) then roots ::= (name, f)
+    if top then roots ::= (name, f)
     else stBlock ::= (name, f)
 
     variable(name)

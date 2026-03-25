@@ -38,35 +38,107 @@ class virtualize extends MacroAnnotation {
       }
 
     def fetchEnclosingClass(s: Symbol): Symbol =
-      if (s.isClassDef) then s
-      else if (s.isNoSymbol) then Symbol.noSymbol
+      if s.isClassDef then s
+      else if s.isNoSymbol then Symbol.noSymbol
       else fetchEnclosingClass(s.maybeOwner)
 
     def makeThis(owner: Symbol): Term = This(fetchEnclosingClass(owner))
 
     def makeUnit(x: Term, thist: Term, unitf: Term): Term = {
       val unitt = TypeRepr.of[Unit]
-      val unitTyp = Applied(TypeSelect(thist, "Typ"), List(TypeTree.of[Unit]))
+      val unitTyp = Applied(TypeSelect(thist, "Liftable"), List(TypeTree.of[Unit]))
 
       val unitW = Implicits.search(unitTyp.tpe) match {
         case success: ImplicitSearchSuccess => success.tree
       }
 
-      //unit[Unit](())(using Typ.of[Unit])
+      // unit[Unit](())(using Typ.of[Unit])
       Apply(Apply(TypeApply(unitf, List(TypeTree.of[Unit])), List(x)), List(unitW))
+    }
+
+    def unRep(t: TypeRepr): Option[TypeRepr] = t.widen match {
+      case AppliedType(f, List(arg)) =>
+        // XXX - do something better
+        if f.show.endsWith("Rep") then Some(arg) else None
+      case t => None
+    }
+
+    def flattenBlockT(t: Statement): (List[Statement], Term) = t match {
+      case Block(body, v) => {
+        val flattenedBody = body.flatMap(stm => {
+          val (stms, endv) = flattenBlockT(stm)
+          stms ++ List(endv)
+        })
+        val (flattenedVStms, trueV) = flattenBlockT(v)
+        (flattenedBody ++ flattenedVStms, trueV)
+      }
+      case t: Term => (Nil, t)
+      case stm     => (List(stm), Literal(UnitConstant()))
+    }
+
+    def flattenBlock(t: Term): Term = {
+      val (body, v) = flattenBlockT(t)
+      Block(body, v)
+    }
+
+    def ensureTrailingRep(t: Term, thist: Term, unitf: Term): Term = {
+      val (body, v) = flattenBlockT(t)
+      val inferredTyp = v.tpe
+
+      if unRep(inferredTyp).isDefined then return Block(body, v)
+
+      val ttree = TypeTree.of(using inferredTyp.asType)
+      val tLiftable = Applied(TypeSelect(thist, "Liftable"), List(ttree))
+
+      val tLiftableW = Implicits.search(tLiftable.tpe) match {
+        case success: ImplicitSearchSuccess => success.tree
+        case failure: ImplicitSearchFailure =>
+          report.errorAndAbort(
+            "couldn't construct type manifest for type Rep[" + inferredTyp.show + "]"
+          )
+      }
+
+      // unit[T](v)(using Liftable.of[T])
+      val repv = Apply(Apply(TypeApply(unitf, List(ttree)), List(v)), List(tLiftableW))
+
+      Block(body, repv)
     }
 
     object Visitor extends TreeMap {
       override def transformTerm(tree: Term)(owner: Symbol): Term =
         tree match {
-          case Apply(Select(lhsp, "=="), List(rhsp)) => {
+          case If(Apply(conv, List(x)), thenp, elsep) => {
             val thist = makeThis(owner)
-            val srcGen = '{SourceContext.generate}.asTerm
 
-            val lhs = this.transformTerm(lhsp)(owner)
-            val rhs = this.transformTerm(rhsp)(owner)
+            val unitf = findMethods(owner, "unit") match {
+              case Nil =>
+                report.errorAndAbort("LMS internal error: no [unit] found for self")
+              case x :: _ => thist.select(x)
+            }
 
-            // TODO
+            val xt =
+              if (conv.show.endsWith("__virtualizedBoolConvInternal.apply")) {
+                this.transformTerm(x)(owner)
+              } else {
+                return super.transformTerm(tree)(owner)
+              }
+
+            val thent =
+              ensureTrailingRep(this.transformTerm(thenp)(owner), thist, unitf)
+            val elset =
+              ensureTrailingRep(this.transformTerm(elsep)(owner), thist, unitf)
+
+            val ttype = thent.tpe.widen
+
+            val trep = unRep(ttype) match {
+              case Some(t) => t
+              case None    =>
+                report.errorAndAbort(
+                  s"BUG: virtualized if/else body does not have trailing Rep type, instead has ${ttype.show}"
+                )
+            }
+
+            Select.overloaded(thist, "__ifThenElse", List(trep), List(xt, thent, elset))
           }
         }
     }
