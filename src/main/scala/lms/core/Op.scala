@@ -13,6 +13,10 @@ object Op {
   case object Minus extends Op
   case object Times extends Op
 
+  case object Equals extends Op
+  case object And extends Op
+  case object Or extends Op
+
   case object IfThenElse extends Op
   case object While extends Op
 }
