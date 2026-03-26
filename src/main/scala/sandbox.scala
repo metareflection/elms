@@ -18,7 +18,6 @@ object Playground extends Driver with Dsl {
   def snippet(x: Rep[Int]): Rep[Int] = pow(x, 5)
 
   @main def main() = {
-    topFun(snippet)
     println((new ScalaCodegen()).render(d.extract()))
   }
 }

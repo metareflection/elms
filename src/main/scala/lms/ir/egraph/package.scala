@@ -1,5 +1,3 @@
-package lms.ir
+package lms.ir.egraph
 
-package object egraph {
-  type Id = Int
-}
+type Id = Int

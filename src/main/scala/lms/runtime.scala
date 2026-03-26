@@ -1,7 +1,5 @@
-package lms
+package lms.runtime
 
 import lms.util.Logger
 
-package object runtime {
-  var Log: Logger = Logger.default
-}
+var Log: Logger = Logger.default
