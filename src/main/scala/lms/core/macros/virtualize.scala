@@ -16,8 +16,6 @@ import scala.reflect.ClassTag
 import scala.annotation.*
 import scala.quoted.*
 
-import lms.util.SourceContext
-
 @experimental
 class virtualize extends MacroAnnotation {
   override def transform(using
@@ -140,6 +138,8 @@ class virtualize extends MacroAnnotation {
 
             Select.overloaded(thist, "__ifThenElse", List(trep), List(xt, thent, elset))
           }
+
+          case _ => super.transformTerm(tree)(owner)
         }
     }
 

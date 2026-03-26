@@ -7,7 +7,7 @@ trait Base {
   protected type Exp
 
   def unit[A: Liftable](x: A): Rep[A]
-  def fun[A, B](f: Rep[A] => Rep[B]): Rep[A => B]
+  def fun[A: Typable, B: Typable](f: Rep[A] => Rep[B]): Rep[A => B]
 
   def region[A](exp: => Rep[A]): Rep[A]
 
