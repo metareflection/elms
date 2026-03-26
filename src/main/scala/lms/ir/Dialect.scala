@@ -11,12 +11,15 @@ abstract class Dialect {
   // that can be instantiated separately by the user.
   def init(): Unit
 
+  def name(s: String): Name
   def fresh(): Name
   def variable(name: Name): Exp
 
-  def fun(top: Boolean, args: Seq[(Name, Type)], outty: Type)(body: => Exp): Exp
+  def fun(name: Option[String], top: Boolean, args: Seq[(Name, Type)], outty: Type)(
+      body: => Exp
+  ): Exp
 
-  def lift[A:Liftable](x: A): Exp
+  def lift[A: Liftable](x: A): Exp
   def reflect(op: Op, children: Seq[Exp]): Exp
   def region(f: => Exp): Exp
 

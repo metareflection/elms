@@ -1,9 +1,8 @@
 package lms
 
-import lms.core.macros.virtualize
-import lms.core.{PrimitiveOps, LiftInt, Driver}
-import lms.ir.anf.Anf
-import lms.codegen.ScalaCodegen
+import lms.prelude._
+import lms.core.{PrimitiveOps, Driver}
+import lms.helpers.SnippetDriver
 
 @virtualize
 trait Dsl extends PrimitiveOps {
@@ -12,12 +11,10 @@ trait Dsl extends PrimitiveOps {
   }
 }
 
-object Playground extends Driver with Dsl {
-  override val d: lms.ir.Dialect = Anf
-
-  def snippet(x: Rep[Int]): Rep[Int] = pow(x, 5)
+object Playground extends SnippetDriver[Int, Int] with Dsl {
+  def snippet(x: Rep[Int]) = pow(x, 3)
 
   @main def main() = {
-    println((new ScalaCodegen()).render(d.extract()))
+    println(code)
   }
 }

@@ -7,7 +7,7 @@ import lms.runtime.Log
 import lms.codegen.ast, ast._
 
 object Anf extends Dialect {
-  type Name = Int
+  type Name = String
 
   type Exp = ast.Term
 
@@ -20,30 +20,40 @@ object Anf extends Dialect {
     roots = Nil
   }
 
+  def name(s: String): Name = s
+
   def fresh(): Name = {
     val result = counter
     counter += 1
-    result
+    s"x$result"
   }
 
-  def variable(name: Name): Exp = V(renderName(name))
+  def variable(name: Name): Exp = V(name)
 
   def collect(tail: => Exp): Exp = {
     stBlock = Nil
     val last = tail
     // uncurry . flip Let
     stBlock.foldLeft(last) { case (e2, (name, e1)) =>
-      Let(renderName(name), e1, e2)
+      Let(name, e1, e2)
     }
   }
 
-  def fun(top: Boolean, args: Seq[(Name, Type)], outty: Type)(body: => Exp): Exp = {
-    val name = fresh()
+  override def fun(
+      mname: Option[String],
+      top: Boolean,
+      args: Seq[(Name, Type)],
+      outty: Type
+  )(body: => Exp): Exp = {
+    val name = mname match {
+      case Some(s) => s
+      case None    => fresh()
+    }
 
     if top then stBlock = Nil
 
     val bodyexp = region(body)
-    val f = ast.Function(args.map(Plumbing.onLeft(renderName)), outty, bodyexp)
+    val f = ast.Function(args, outty, bodyexp)
 
     if top then roots ::= (name, f)
     else stBlock ::= (name, f)
@@ -67,14 +77,12 @@ object Anf extends Dialect {
     result
   }
 
-  def renderName(n: Name): String = s"x$n"
-
   def extract(): ast.Program = {
     if (!stBlock.isEmpty) {
       val x: Unit =
         Log.warning("INTERNAL BUG: attempted to `extract` with non-empty `stBlock`")
     }
 
-    ast.Program(roots.map(Plumbing.onLeft(renderName)))
+    ast.Program(roots)
   }
 }
