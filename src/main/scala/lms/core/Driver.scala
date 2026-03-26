@@ -1,15 +1,13 @@
 package lms.core
 
 import lms.core.Op
-import lms.ir.Dialect
 import lms.codegen.ast
+import lms.ir
 
 abstract class Driver extends Base {
-  protected val d: Dialect
+  protected val d: ir.Builder
   protected type Exp = d.Exp
   type Rep[T] = Exp
-
-  def reset() = d.init()
 
   def makeFun[A: Typable, B: Typable](
       name: Option[String],

@@ -3,13 +3,9 @@ package lms.ir
 import lms.core.{Liftable, Type, Op}
 import lms.codegen.ast.Program
 
-abstract class Dialect {
+abstract class Builder {
   type Exp
   type Name
-
-  // CR cwong: Instead of providing `init`, we should make `Dialect` a class
-  // that can be instantiated separately by the user.
-  def init(): Unit
 
   def name(s: String): Name
   def fresh(): Name

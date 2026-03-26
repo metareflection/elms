@@ -2,11 +2,11 @@ package lms.ir.anf
 
 import lms.util.Plumbing
 import lms.core.{Liftable, Type, Op}, Op._
-import lms.ir, ir.Dialect
+import lms.ir
 import lms.runtime.Log
 import lms.codegen.ast, ast._
 
-object Anf extends Dialect {
+class Builder extends ir.Builder {
   type Name = String
 
   type Exp = ast.Term

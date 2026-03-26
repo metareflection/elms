@@ -1,12 +1,11 @@
 package lms.helpers
 
 import lms.core.{Driver, Typable}
-import lms.ir.Dialect
-import lms.ir.anf.Anf
+import lms.ir.{anf, Builder}
 import lms.codegen.{Backend, ScalaCodegen}
 
 abstract class SnippetDriver[A: Typable, B: Typable](
-  dialect: Dialect = Anf,
+  dialect: Builder = new anf.Builder(),
   codegen: Backend = new ScalaCodegen())
     extends Driver {
   override val d = dialect
