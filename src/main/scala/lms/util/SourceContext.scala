@@ -18,6 +18,6 @@ object SourceContext {
     val column = pos.startColumn + 1
 
     // TODO
-    '{ SourceContext(${Expr(file)}, ${Expr(line)}, ${Expr(column)}) }
+    '{ SourceContext(${ Expr(file) }, ${ Expr(line) }, ${ Expr(column) }) }
   }
 }

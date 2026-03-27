@@ -5,9 +5,9 @@ import lms.ir.{anf, Builder}
 import lms.codegen.{Backend, ScalaCodegen}
 
 abstract class SnippetDriver[A: Typable, B: Typable](
-  dialect: Builder = new anf.Builder(),
-  codegen: Backend = new ScalaCodegen())
-    extends Driver {
+    dialect: Builder = new anf.Builder(),
+    codegen: Backend = new ScalaCodegen()
+) extends Driver {
   override val d = dialect
   def snippet(x: Rep[A]): Rep[B]
 

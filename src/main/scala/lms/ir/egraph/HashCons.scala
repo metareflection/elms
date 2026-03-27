@@ -6,14 +6,10 @@ class HashCons[Op]:
 
   private val table = mutable.Map.empty[ENode, Id]
 
-  def get(node: ENode): Option[Id] =
-    table.get(node)
+  def get(node: ENode): Option[Id] = table.get(node)
 
-  def insert(node: ENode, id: Id): Unit =
-    table(node) = id
+  def insert(node: ENode, id: Id): Unit = table(node) = id
 
-  def remove(node: ENode): Unit =
-    table.remove(node)
+  def remove(node: ENode): Unit = table.remove(node)
 
-  def contains(node: ENode): Boolean =
-    table.contains(node)
+  def contains(node: ENode): Boolean = table.contains(node)

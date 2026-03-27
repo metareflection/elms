@@ -14,6 +14,9 @@ object Type {
   case object BOOL extends Type {
     type T = Boolean
   }
+  case object CHAR extends Type {
+    type T = Char
+  }
   case object STRING extends Type {
     type T = String
   }

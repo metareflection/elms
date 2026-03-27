@@ -1,3 +1,5 @@
+name := "lms3"
+
 ThisBuild / scalaVersion := "3.6.4"
 
 scalacOptions ++= Seq("-experimental")

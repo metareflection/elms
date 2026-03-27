@@ -17,9 +17,7 @@ trait SnapshotFunSuite extends AnyFunSuite {
       fis.read(buf)
       fis.close()
       new String(buf)
-    } catch {
-      case e: IOException => ""
-    }
+    } catch { case e: IOException => "" }
   }
 
   def writeFile(name: String, content: String) = {

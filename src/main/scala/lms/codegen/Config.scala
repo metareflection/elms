@@ -8,10 +8,7 @@ import lms.util.IndentedWriter
   *   The number of tabstops to indent the entire generated program by.
   * @param indentKind
   */
-case class Config(
-    baseIndentLevel: Int,
-    indentKind: IndentedWriter.IndentKind,
-)
+case class Config(baseIndentLevel: Int, indentKind: IndentedWriter.IndentKind)
 
 object Config {
   val tabs: IndentedWriter.IndentKind = IndentedWriter.UseTabs

@@ -16,6 +16,10 @@ sealed abstract class Liftable[A] extends Typable[A] {
 }
 
 object Typable {
+  implicit object LiftUnit extends Liftable[Unit] {
+    val identity = UNIT
+  }
+
   implicit object LiftInt extends Liftable[Int] {
     val identity = INT
   }
@@ -24,11 +28,11 @@ object Typable {
     val identity = BOOL
   }
 
-  implicit object LiftString extends Liftable[String] {
-    val identity = STRING
+  implicit object LiftChar extends Liftable[Char] {
+    val identity = CHAR
   }
 
-  implicit object LiftUnit extends Liftable[Unit] {
-    val identity = UNIT
+  implicit object LiftString extends Liftable[String] {
+    val identity = STRING
   }
 }

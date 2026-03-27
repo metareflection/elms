@@ -34,9 +34,7 @@ class Builder extends ir.Builder {
     stBlock = Nil
     val last = tail
     // uncurry . flip Let
-    stBlock.foldLeft(last) { case (e2, (name, e1)) =>
-      Let(name, e1, e2)
-    }
+    stBlock.foldLeft(last) { case (e2, (name, e1)) => Let(name, e1, e2) }
   }
 
   override def fun(
@@ -55,14 +53,12 @@ class Builder extends ir.Builder {
     val bodyexp = region(body)
     val f = ast.Function(args, outty, bodyexp)
 
-    if top then roots ::= (name, f)
-    else stBlock ::= (name, f)
+    if top then roots ::= (name, f) else stBlock ::= (name, f)
 
     variable(name)
   }
 
-  def lift[A: Liftable](x: A): Exp =
-    ast.E(Const(summon[Liftable[A]].identity)(x), Nil)
+  def lift[A: Liftable](x: A): Exp = ast.E(Const(summon[Liftable[A]].identity)(x), Nil)
 
   def reflect(op: Op, children: Seq[Exp]): Exp = {
     val name = fresh()
@@ -79,8 +75,8 @@ class Builder extends ir.Builder {
 
   def extract(): ast.Program = {
     if (!stBlock.isEmpty) {
-      val x: Unit =
-        Log.warning("INTERNAL BUG: attempted to `extract` with non-empty `stBlock`")
+      val x: Unit = Log
+        .warning("INTERNAL BUG: attempted to `extract` with non-empty `stBlock`")
     }
 
     ast.Program(roots)

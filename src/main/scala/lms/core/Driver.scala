@@ -23,9 +23,9 @@ abstract class Driver extends Base {
   }
 
   override def unit[A: Liftable](x: A): Rep[A] = d.lift(x)
-  override def fun[A: Typable, B: Typable](
-      name: Option[String]
-  )(f: Rep[A] => Rep[B]): Rep[A => B] = makeFun[A, B](name, true, f)
+  override def fun[A: Typable, B: Typable](name: Option[String])(
+      f: Rep[A] => Rep[B]
+  ): Rep[A => B] = makeFun[A, B](name, true, f)
   override def lam[A: Typable, B: Typable](f: Rep[A] => Rep[B]): Rep[A => B] =
     makeFun[A, B](None, false, f)
 
@@ -33,8 +33,8 @@ abstract class Driver extends Base {
 
   override def unsafeWrap[T](exp: Exp): Rep[T] = exp
   override def unsafeUnwrap[T](rep: Rep[T]): Exp = rep
-  override def unsafeRegister(op: Op, children: Exp*): Exp =
-    d.reflect(op, children.toVector)
+  override def unsafeRegister(op: Op, children: Exp*): Exp = d
+    .reflect(op, children.toVector)
 
   def extract(): ast.Program = d.extract()
 }

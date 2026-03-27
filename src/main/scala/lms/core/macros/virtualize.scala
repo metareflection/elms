@@ -90,8 +90,7 @@ class virtualize extends MacroAnnotation {
 
       val tLiftableW = Implicits.search(tLiftable.tpe) match {
         case success: ImplicitSearchSuccess => success.tree
-        case failure: ImplicitSearchFailure =>
-          report.errorAndAbort(
+        case failure: ImplicitSearchFailure => report.errorAndAbort(
             "couldn't construct type manifest for type Rep[" + inferredTyp.show + "]"
           )
       }
@@ -103,44 +102,39 @@ class virtualize extends MacroAnnotation {
     }
 
     object Visitor extends TreeMap {
-      override def transformTerm(tree: Term)(owner: Symbol): Term =
-        tree match {
-          case If(Apply(conv, List(x)), thenp, elsep) => {
-            val thist = makeThis(owner)
+      override def transformTerm(tree: Term)(owner: Symbol): Term = tree match {
+        case If(Apply(conv, List(x)), thenp, elsep) => {
+          val thist = makeThis(owner)
 
-            val unitf = findMethods(owner, "unit") match {
-              case Nil =>
-                report.errorAndAbort("LMS internal error: no [unit] found for self")
-              case x :: _ => thist.select(x)
-            }
-
-            val xt =
-              if (conv.show.endsWith("__virtualizedBoolConvInternal.apply")) {
-                this.transformTerm(x)(owner)
-              } else {
-                return super.transformTerm(tree)(owner)
-              }
-
-            val thent =
-              ensureTrailingRep(this.transformTerm(thenp)(owner), thist, unitf)
-            val elset =
-              ensureTrailingRep(this.transformTerm(elsep)(owner), thist, unitf)
-
-            val ttype = thent.tpe.widen
-
-            val trep = unRep(ttype) match {
-              case Some(t) => t
-              case None    =>
-                report.errorAndAbort(
-                  s"BUG: virtualized if/else body does not have trailing Rep type, instead has ${ttype.show}"
-                )
-            }
-
-            Select.overloaded(thist, "__ifThenElse", List(trep), List(xt, thent, elset))
+          val unitf = findMethods(owner, "unit") match {
+            case Nil => report
+                .errorAndAbort("LMS internal error: no [unit] found for self")
+            case x :: _ => thist.select(x)
           }
 
-          case _ => super.transformTerm(tree)(owner)
+          val xt =
+            if (conv.show.endsWith("__virtualizedBoolConvInternal.apply")) {
+              this.transformTerm(x)(owner)
+            } else { return super.transformTerm(tree)(owner) }
+
+          val thent = ensureTrailingRep(this.transformTerm(thenp)(owner), thist, unitf)
+          val elset = ensureTrailingRep(this.transformTerm(elsep)(owner), thist, unitf)
+
+          val ttype = thent.tpe.widen
+
+          val trep = unRep(ttype) match {
+            case Some(t) => t
+            case None    => report.errorAndAbort(
+                s"BUG: virtualized if/else body does not have trailing Rep type, instead has ${ttype
+                    .show}"
+              )
+          }
+
+          Select.overloaded(thist, "__ifThenElse", List(trep), List(xt, thent, elset))
         }
+
+        case _ => super.transformTerm(tree)(owner)
+      }
     }
 
     tree match {

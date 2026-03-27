@@ -28,11 +28,7 @@ class VirtualizeTests extends SnapshotFunSuite {
   test("if nested") {
     object Snippet extends SnippetDriver[Boolean, Int] with DslOps {
       def snippet(x: Rep[Boolean]): Rep[Int] = {
-        if x then {
-          if x then 1 else 2
-        } else {
-          0
-        }
+        if x then { if x then 1 else 2 } else { 0 }
       }
     }
 
@@ -41,26 +37,23 @@ class VirtualizeTests extends SnapshotFunSuite {
 
   test("equality guard") {
     object Snippet extends SnippetDriver[Int, Int] with DslOps {
-      def snippet(x: Rep[Int]): Rep[Int] = {
-        if (x === 1) 2 else x
-      }
+      def snippet(x: Rep[Int]): Rep[Int] = { if (x === 1) 2 else x }
     }
     check("if-tutorial", Snippet.code)
   }
 
   test("pow-square") {
-    object Snippet extends SnippetDriver[Int,Int] with DslOps {
-      def square(x: Rep[Int]): Rep[Int] = x*x
+    object Snippet extends SnippetDriver[Int, Int] with DslOps {
+      def square(x: Rep[Int]): Rep[Int] = x * x
 
       def power(b: Rep[Int], n: Int): Rep[Int] =
         if (n == 0) 1
-        else if (n % 2 == 0) square(power(b, n/2))
-        else b * power(b, n-1)
+        else if (n % 2 == 0) square(power(b, n / 2))
+        else b * power(b, n - 1)
 
-      def snippet(b: Rep[Int]): Rep[Int] =
-        power(b, 7)
+      def snippet(b: Rep[Int]): Rep[Int] = power(b, 7)
     }
-    check("pow-square", Snippet.code, accept=true)
+    check("pow-square", Snippet.code, accept = true)
   }
 
   test("function calls") {

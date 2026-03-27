@@ -14,17 +14,13 @@ class EGraph[Data](analysis: Analysis[Data]):
   private def canon(op: Op, children: Vector[Id]): ENode =
     ENode(op, children.map(uf.find))
 
-  private def canon(node: ENode): ENode =
-    canon(node.op, node.children)
+  private def canon(node: ENode): ENode = canon(node.op, node.children)
 
-  def find(id: Id): Id =
-    uf.find(id)
+  def find(id: Id): Id = uf.find(id)
 
-  def eclass(id: Id): Option[EClass[Data]] =
-    classes.get(uf.find(id))
+  def eclass(id: Id): Option[EClass[Data]] = classes.get(uf.find(id))
 
-  def data(id: Id): Data =
-    classes(uf.find(id)).data
+  def data(id: Id): Data = classes(uf.find(id)).data
 
   private def recomputeData(id0: Id): Unit = {
     val id = uf.find(id0)

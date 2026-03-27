@@ -1,6 +1,7 @@
 .bsp/
 .metals/
 .bloop/
-project/
+project/*
+!project/plugins.sbt
 target/
 src/out/**/*.actual.*

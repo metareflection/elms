@@ -19,4 +19,12 @@ object Op {
 
   case object IfThenElse extends Op
   case object While extends Op
+
+  case object StringLength extends Op
+  case object StringTake extends Op
+  case object StringDrop extends Op
+  case object StringStartsWith extends Op
+  case object StringEndsWith extends Op
+  case object StringCharAt extends Op
+  case object StringSubstring extends Op
 }
