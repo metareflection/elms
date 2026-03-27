@@ -3,3 +3,4 @@
 .bloop/
 project/
 target/
+src/out/**/*.actual.*

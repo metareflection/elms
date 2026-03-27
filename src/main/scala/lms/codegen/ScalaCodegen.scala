@@ -53,6 +53,7 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
         out.emitTerm(e2)
       }
       case Function(args, outty, body) => {
+        // CR cwong: TODO
         Log.error("TODO: lambdas")
       }
     }
@@ -72,12 +73,14 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
             out.emitMaybeParenthesized(guard)
             out.emitln(" then {")
             out.indented { out.emitTerm(tthen) }
+            out.emitln("")
             out.emitln("} else {")
             out.indented { out.emitTerm(telse) }
+            out.emitln("")
             out.emit("}")
           }
           case _                        => {
-            Log.error(s"possible BUG: IfThenElse should have exactly 3 children")
+            Log.error(s"BUG: IfThenElse should have exactly 3 children")
             out.emit("???")
           }
         }
@@ -91,7 +94,7 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
             out.emit("}")
           }
           case _ => {
-            Log.error(s"possible BUG: While should have exactly 2 children")
+            Log.error(s"BUG: While should have exactly 2 children")
             out.emit("???")
           }
         }
@@ -102,7 +105,7 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
             out.emitArgTerms(args)
           }
           case _         => {
-            Log.error(s"possible BUG: attempted to render function application with no args")
+            Log.error(s"BUG: attempted to render function application with no children")
             out.emit("???")
           }
         }
@@ -133,7 +136,7 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
           out.emitMaybeParenthesized(y)
         }
         case _ => {
-          Log.error(s"possible BUG: attempted to render binary op with len(args) != 2")
+          Log.error(s"BUG: attempted to render binary op with len(args) != 2")
           out.emit(sym)
           emitArgTerms(args)
         }
