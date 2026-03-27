@@ -3,7 +3,7 @@ package lms.core
 import scala.Conversion
 
 trait Base {
-  type Rep[T]
+  type Rep[+T]
   protected type Exp
 
   def unit[A: Liftable](x: A): Rep[A]
@@ -28,6 +28,6 @@ trait Base {
 
   def unsafeLift[A: Liftable](x: A): Exp = unsafeUnwrap(unit(x))
 
-  def unsafeReflect[T](op: Op, children: Exp*): Rep[T] =
-    unsafeWrap(unsafeRegister(op, children*))
+  def unsafeReflect[T](op: Op, children: Rep[Any]*): Rep[T] =
+    unsafeWrap(unsafeRegister(op, children.map(unsafeUnwrap)*))
 }

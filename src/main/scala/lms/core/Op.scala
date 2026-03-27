@@ -1,4 +1,4 @@
-// Contains the operations supported by all LMS backends.
+// Contains the operations supported by LMS.
 
 package lms.core
 

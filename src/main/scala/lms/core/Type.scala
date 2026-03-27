@@ -5,10 +5,16 @@ sealed trait Type {
 }
 
 object Type {
+  case object UNIT extends Type {
+    type T = Unit
+  }
   case object INT extends Type {
     type T = Int
   }
   case object BOOL extends Type {
     type T = Boolean
+  }
+  case object STRING extends Type {
+    type T = String
   }
 }

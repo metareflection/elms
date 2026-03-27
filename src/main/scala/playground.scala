@@ -1,14 +1,21 @@
 package lms
 
 import lms.prelude._
-import lms.core.{PrimitiveOps, Driver}
-import lms.helpers.SnippetDriver
+import lms.helpers._
 
-trait Dsl extends PrimitiveOps {
+trait Dsl extends DslOps {
   @virtualize
   def pow(x: Rep[Int], n: Int): Rep[Int] = {
     if n == 0 then 1 else x * pow(x, n-1)
   }
+
+  def foo(f: Rep[Int => Int]) = f(1)
+
+  /*
+  def bar(f: Rep[(Int, String) => Int]) =
+    //f((unit(1), unit("")))
+    call[(Int, String) => Int, (Int, String), Int](f, (unit(1), unit("")))
+    */
 }
 
 object Playground extends SnippetDriver[Int, Int] with Dsl {

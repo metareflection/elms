@@ -16,13 +16,15 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
 
   extension (c: Const)
     def render: String = c.typ match {
-      case INT | BOOL => s"${c.v}"
+      case INT | BOOL | STRING | UNIT => s"${c.v}"
     }
 
   extension (ty: Type)
     private def render: String = ty match {
       case INT  => "Int"
       case BOOL => "Boolean"
+      case STRING => "String"
+      case UNIT => "Unit"
     }
 
   extension (t: Term)

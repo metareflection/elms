@@ -1,6 +1,7 @@
 ThisBuild / scalaVersion := "3.6.4"
 
 scalacOptions ++= Seq("-experimental")
+scalacOptions ++= Seq("-Wconf:msg=match may not be exhaustive:e")
 
 libraryDependencies += "org.scala-lang" %% "scala3-compiler" % scalaVersion.value
 libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.19"

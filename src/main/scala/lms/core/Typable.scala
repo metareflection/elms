@@ -23,4 +23,12 @@ object Typable {
   implicit object LiftBool extends Liftable[Boolean] {
     val identity = BOOL
   }
+
+  implicit object LiftString extends Liftable[String] {
+    val identity = STRING
+  }
+
+  implicit object LiftUnit extends Liftable[Unit] {
+    val identity = UNIT
+  }
 }
