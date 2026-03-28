@@ -5,6 +5,7 @@ import annotation.implicitNotFound
 
 import lms.runtime.Log
 import lms.core.Op._
+import lms.util.OverloadHack._
 
 trait PrimitiveOps extends Base {
   def __ifThenElse[T](c: Rep[Boolean], t: => Rep[T], e: => Rep[T]): Rep[T] =
@@ -55,7 +56,7 @@ trait PrimitiveOps extends Base {
   extension [B](f: Rep[() => B]) def apply(): Rep[B] = unsafeReflect(App, f)
 
   extension [A, B](f: Rep[A => B])
-    def apply(arg: Rep[A]): Rep[B] = unsafeReflect(App, f, arg)
+    def apply(arg: Rep[A])(using o: O1): Rep[B] = unsafeReflect(App, f, arg)
 
   extension [A1, A2, B](f: Rep[(A1, A2) => B])
     def apply(a1: Rep[A1], a2: Rep[A2]): Rep[B] = unsafeReflect(App, f, a1, a2)

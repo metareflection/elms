@@ -15,22 +15,24 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
     s"$name: ${ty.render}"
   }.mkString(",")
 
-  extension (c: Const)
-    def render: String = c.typ match { case UNIT | INT | BOOL | STRING | CHAR => s"${c.v}" }
+  extension [A](c: Const[A])
+    // TODO: this is wrong for arrays
+    def render: String = s"${c.v}"
 
   extension (ty: Type)
     private def render: String = ty match {
-      case UNIT   => "Unit"
-      case INT    => "Int"
-      case BOOL   => "Boolean"
-      case CHAR => "Char"
-      case STRING => "String"
+      case UNIT     => "Unit"
+      case INT      => "Int"
+      case BOOL     => "Boolean"
+      case CHAR     => "Char"
+      case STRING   => "String"
+      case ARRAY(t) => s"Array[$t.render]"
     }
 
   extension (t: Term)
     private def isCompound: Boolean = t match {
-      case V(_) | E(_: Const, Nil) => false
-      case _                       => true
+      case V(_) | E(_: Const[_], Nil) => false
+      case _                          => true
     }
 
   extension (out: IndentedWriter)
@@ -54,9 +56,12 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
         out.emitln("")
         out.emitTerm(e2)
       }
-      case Function(args, outty, body) => {
-        // CR cwong: TODO
-        Log.error("TODO: lambdas")
+      case Function(args, _outty, body) => {
+        out.emit("(")
+        out.emit(renderArgs(args))
+        out.emitln(") => {")
+        out.indented { out.emitTerm(body) }
+        out.emitln("}")
       }
     }
 
@@ -72,8 +77,8 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
     }
 
     private def emitCompound(op: Op, children: Seq[Term]): Unit = op match {
-      case c: Const   => out.emit(c.render)
-      case IfThenElse => children match {
+      case c: Const[_] => out.emit(c.render)
+      case IfThenElse  => children match {
           case Seq(guard, tthen, telse) => {
             out.emit("if ")
             out.emitMaybeParenthesized(guard)
@@ -113,19 +118,19 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
             out.emit("???")
           }
         }
-      case Plus   => out.emitBinop("+", children)
-      case Times  => out.emitBinop("*", children)
-      case Minus  => out.emitBinop("-", children)
-      case Equals => out.emitBinop("==", children)
-      case And    => out.emitBinop("&&", children)
-      case Or     => out.emitBinop("||", children)
-      case StringLength => out.emitKnownFunctionCall("String.length", children)
-      case StringTake => out.emitKnownFunctionCall("String.take", children)
-      case StringDrop => out.emitKnownFunctionCall("String.drop", children)
+      case Plus             => out.emitBinop("+", children)
+      case Times            => out.emitBinop("*", children)
+      case Minus            => out.emitBinop("-", children)
+      case Equals           => out.emitBinop("==", children)
+      case And              => out.emitBinop("&&", children)
+      case Or               => out.emitBinop("||", children)
+      case StringLength     => out.emitKnownFunctionCall("String.length", children)
+      case StringTake       => out.emitKnownFunctionCall("String.take", children)
+      case StringDrop       => out.emitKnownFunctionCall("String.drop", children)
       case StringStartsWith => out.emitKnownFunctionCall("String.startsWith", children)
-      case StringEndsWith => out.emitKnownFunctionCall("String.endsWith", children)
-      case StringCharAt => out.emitKnownFunctionCall("String.charAt", children)
-      case StringSubstring => out.emitKnownFunctionCall("String.substring", children)
+      case StringEndsWith   => out.emitKnownFunctionCall("String.endsWith", children)
+      case StringCharAt     => out.emitKnownFunctionCall("String.charAt", children)
+      case StringSubstring  => out.emitKnownFunctionCall("String.substring", children)
     }
 
     private def emitArgTerms(args: Seq[Term]): Unit = {

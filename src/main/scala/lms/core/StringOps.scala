@@ -1,6 +1,7 @@
 package lms.core
 
 import lms.core.Op._
+import lms.util.OverloadHack._
 
 trait StringOps extends Base {
   extension (s: Rep[String])
@@ -12,7 +13,7 @@ trait StringOps extends Base {
     def endsWith(haystack: Rep[String]): Rep[Boolean] =
       unsafeReflect(StringEndsWith, s, haystack)
     def charAt(i: Rep[Int]): Rep[Char] = unsafeReflect(StringCharAt, s, i)
-    //def apply(i: Rep[Int]): Rep[Char] = s.charAt(i)
+    def apply(i: Rep[Int])(using o: O2): Rep[Char] = s.charAt(i)
     def substring(st: Rep[Int], end: Rep[Int]): Rep[String] =
       unsafeReflect(StringSubstring, s, st, end)
 }

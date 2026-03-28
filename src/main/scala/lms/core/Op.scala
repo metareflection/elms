@@ -5,7 +5,7 @@ package lms.core
 sealed trait Op
 
 object Op {
-  case class Const(typ: Type)(val v: typ.T) extends Op
+  case class Const[T](val v: T) extends Op
 
   case object App extends Op
 

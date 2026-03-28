@@ -1,23 +1,14 @@
 package lms.core
 
-sealed trait Type {
-  type T
-}
+// CR cwong: This design needs to be rethought.
+
+sealed trait Type
 
 object Type {
-  case object UNIT extends Type {
-    type T = Unit
-  }
-  case object INT extends Type {
-    type T = Int
-  }
-  case object BOOL extends Type {
-    type T = Boolean
-  }
-  case object CHAR extends Type {
-    type T = Char
-  }
-  case object STRING extends Type {
-    type T = String
-  }
+  case object UNIT extends Type
+  case object INT extends Type
+  case object BOOL extends Type
+  case object CHAR extends Type
+  case object STRING extends Type
+  case class ARRAY(elt: Type) extends Type
 }

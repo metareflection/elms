@@ -58,7 +58,7 @@ class Builder extends ir.Builder {
     variable(name)
   }
 
-  def lift[A: Liftable](x: A): Exp = ast.E(Const(summon[Liftable[A]].identity)(x), Nil)
+  def lift[A: Liftable](x: A): Exp = ast.E(Const(x), Nil)
 
   def reflect(op: Op, children: Seq[Exp]): Exp = {
     val name = fresh()
