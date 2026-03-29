@@ -11,12 +11,11 @@ sealed abstract class Typable[A] {
 }
 
 @implicitNotFound("${A} cannot be lifted")
-sealed abstract class Liftable[A] extends Typable[A] {
-}
+sealed abstract class Liftable[A] extends Typable[A]
 
 object Typable {
-  implicit class ArrayManifest[A](using t: Typable[A]) extends Typable[Array[A]] {
-    val identity = ARRAY(t.identity)
+  implicit class ArrayManifest[A: Typable] extends Typable[Array[A]] {
+    val identity = ARRAY(summon[Typable[A]].identity)
   }
 }
 

@@ -15,9 +15,7 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
     s"$name: ${ty.render}"
   }.mkString(",")
 
-  extension [A](c: Const[A])
-    // TODO: this is wrong for arrays
-    def render: String = s"${c.v}"
+  extension [A](c: Const[A]) def render: String = s"${c.v}"
 
   extension (ty: Type)
     private def render: String = ty match {
@@ -26,7 +24,7 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
       case BOOL     => "Boolean"
       case CHAR     => "Char"
       case STRING   => "String"
-      case ARRAY(t) => s"Array[$t.render]"
+      case ARRAY(t) => s"Array[${t.render}]"
     }
 
   extension (t: Term)
@@ -71,11 +69,6 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
       if t.isCompound then out.emit(")")
     }
 
-    private def emitKnownFunctionCall(name: String, args: Seq[Term]): Unit = {
-      out.emit(name)
-      out.emitArgTerms(args)
-    }
-
     private def emitCompound(op: Op, children: Seq[Term]): Unit = op match {
       case c: Const[_] => out.emit(c.render)
       case IfThenElse  => children match {
@@ -114,23 +107,45 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
             out.emitArgTerms(args)
           }
           case _ => {
-            Log.error(s"BUG: attempted to render function application with no children")
+            Log.error(s"BUG: function application with no children")
             out.emit("???")
           }
         }
-      case Plus             => out.emitBinop("+", children)
-      case Times            => out.emitBinop("*", children)
-      case Minus            => out.emitBinop("-", children)
-      case Equals           => out.emitBinop("==", children)
-      case And              => out.emitBinop("&&", children)
-      case Or               => out.emitBinop("||", children)
-      case StringLength     => out.emitKnownFunctionCall("String.length", children)
-      case StringTake       => out.emitKnownFunctionCall("String.take", children)
-      case StringDrop       => out.emitKnownFunctionCall("String.drop", children)
-      case StringStartsWith => out.emitKnownFunctionCall("String.startsWith", children)
-      case StringEndsWith   => out.emitKnownFunctionCall("String.endsWith", children)
-      case StringCharAt     => out.emitKnownFunctionCall("String.charAt", children)
-      case StringSubstring  => out.emitKnownFunctionCall("String.substring", children)
+      case Plus         => out.emitBinop("+", children)
+      case Times        => out.emitBinop("*", children)
+      case Minus        => out.emitBinop("-", children)
+      case Equals       => out.emitBinop("==", children)
+      case And          => out.emitBinop("&&", children)
+      case Or           => out.emitBinop("||", children)
+      case ArrayNew(ty) => {
+        out.emit(s"new Array[${ty.render}]")
+        out.emitArgTerms(children)
+      }
+      case ArrayGet => children match {
+          case Seq(arr, i) => {
+            out.emitTerm(arr)
+            out.emit("(")
+            out.emitTerm(i)
+            out.emit(")")
+          }
+          case _ => {
+            Log.error(s"BUG: ArrayGet not enough children")
+            out.emit("???")
+          }
+        }
+      case ArraySet => children match {
+          case Seq(arr, i, x) => {
+            out.emitTerm(arr)
+            out.emit("(")
+            out.emitTerm(i)
+            out.emit(") = ")
+            out.emitTerm(x)
+          }
+          case _ => {
+            Log.error(s"BUG: ArraySet not enough children")
+            out.emit("???")
+          }
+        }
     }
 
     private def emitArgTerms(args: Seq[Term]): Unit = {

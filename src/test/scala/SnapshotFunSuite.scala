@@ -1,6 +1,7 @@
 package lms.test
 
 import java.io._
+import java.nio.file.{Files, Paths}
 import org.scalatest.funsuite.AnyFunSuite
 
 trait SnapshotFunSuite extends AnyFunSuite {
@@ -9,6 +10,15 @@ trait SnapshotFunSuite extends AnyFunSuite {
 
   val prefix = "src/out/"
   val under: String
+
+  try {
+    val fullPrefix = this.prefix + this.under
+    val i = fullPrefix.lastIndexOf('/')
+    if (i != -1) then {
+      val path = Paths.get(fullPrefix.substring(0, i))
+      Files.createDirectories(path)
+    }
+  } catch { case e: IOException => () }
 
   def readFile(name: String): String = {
     try {
@@ -21,6 +31,10 @@ trait SnapshotFunSuite extends AnyFunSuite {
   }
 
   def writeFile(name: String, content: String) = {
+    val lastSlash = name.lastIndexOf('/')
+    if (lastSlash != -1) then {
+      Files.createDirectories(Paths.get(name.substring(0, lastSlash)))
+    }
     val out = new java.io.PrintWriter(new File(name))
     out.write(content)
     out.close()
