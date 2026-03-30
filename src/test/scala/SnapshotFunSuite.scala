@@ -61,5 +61,9 @@ trait SnapshotFunSuite extends AnyFunSuite {
         assert(expected == actual)
       }
     }
+
+    // If we get this far, the test passed. Remove any malingering .actual files.
+    val f = new File(actualName)
+    if f.exists then f.delete
   }
 }

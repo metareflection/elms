@@ -1,6 +1,6 @@
 package lms.test
 
-import lms.prelude._
+import lms.prelude.{_, given}
 import lms.helpers.SnippetDriver
 import lms.helpers.DslOps
 

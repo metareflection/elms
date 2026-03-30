@@ -31,5 +31,6 @@ trait Base {
   def unsafeReflect[T](op: Op, children: Rep[Any]*): Rep[T] =
     unsafeWrap(unsafeRegister(op, children.map(unsafeUnwrap)*))
 
+  def unsafeFresh[T](): Rep[T]
   def unsafeDeclare[T](name: String): Rep[T]
 }

@@ -18,8 +18,22 @@ trait PrimitiveOps extends Base {
       );
     }
 
-  extension [T](using CanEqual[T, T])(lhs: Rep[T])
+  extension [T](lhs: Rep[T])(using CanEqual[T, T])
     def ===(rhs: Rep[T]): Rep[Boolean] = unsafeReflect(Equals, lhs, rhs)
+
+  trait RepLength[A] {
+    def run(x: Rep[A]): Rep[Int]
+  }
+
+  extension [A](x: Rep[A])(using provider: RepLength[A])
+    def length: Rep[Int] = provider.run(x)
+
+  trait RepApply1[F,Input,Output] {
+    def run(f: Rep[F], x: Rep[Input]): Rep[Output]
+  }
+
+  extension [F, Input, Output](f: Rep[F])(using provider: RepApply1[F, Input, Output])
+    def apply(arg: Rep[Input]): Rep[Output] = provider.run(f, arg)
 
   // At the moment, it's very difficult to use `==` for Rep operations, due to
   // the `.equals` always returning `Bool`. Previously, LMS would rewrite the
@@ -55,8 +69,8 @@ trait PrimitiveOps extends Base {
 
   extension [B](f: Rep[() => B]) def apply(): Rep[B] = unsafeReflect(App, f)
 
-  extension [A, B](f: Rep[A => B])
-    def apply(arg: Rep[A])(using O1): Rep[B] = unsafeReflect(App, f, arg)
+  given [A, B]: RepApply1[A => B, A, B] with
+    def run(f: Rep[A => B], arg: Rep[A]): Rep[B] = unsafeReflect(App, f, arg)
 
   extension [A1, A2, B](f: Rep[(A1, A2) => B])
     def apply(a1: Rep[A1], a2: Rep[A2]): Rep[B] = unsafeReflect(App, f, a1, a2)

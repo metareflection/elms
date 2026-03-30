@@ -1,6 +1,7 @@
 package lms
 
 import lms.prelude._
+import lms.prelude.given
 import lms.helpers._
 
 trait Dsl extends DslOps {

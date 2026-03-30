@@ -1,6 +1,7 @@
 package lms.core
 
 import scala.Conversion
+import scala.util.NotGiven
 import annotation.implicitNotFound
 
 import Type._
@@ -14,29 +15,29 @@ sealed abstract class Typable[A] {
 sealed abstract class Liftable[A] extends Typable[A]
 
 object Typable {
-  implicit class ArrayManifest[A: Typable] extends Typable[Array[A]] {
-    val identity = ARRAY(summon[Typable[A]].identity)
-  }
+  given [A](using inner: Typable[A], ng: NotGiven[Liftable[A]]): Typable[Array[A]] with
+    val identity = ARRAY(inner.identity)
 }
 
 object Liftable {
-  implicit object LiftUnit extends Liftable[Unit] {
+  given Liftable[Unit] with
     val identity = UNIT
-  }
 
-  implicit object LiftInt extends Liftable[Int] {
+  given Liftable[Int] with
     val identity = INT
-  }
 
-  implicit object LiftBool extends Liftable[Boolean] {
+  given Liftable[Boolean] with
     val identity = BOOL
-  }
 
-  implicit object LiftChar extends Liftable[Char] {
+  given Liftable[Char] with
     val identity = CHAR
-  }
 
-  implicit object LiftString extends Liftable[String] {
+  given Liftable[String] with
     val identity = STRING
-  }
+
+  // CR cwong: This is a huge footgun when it comes to pretty-printing `Const`
+  // arrays. We should instead introduce a bespoke array constructor that lifts
+  // `Array[A]` to `Rep[Array[A]]` elementwise.
+  given [A: Liftable]: Liftable[Array[A]] with
+    val identity = ARRAY(summon[Liftable[A]].identity)
 }

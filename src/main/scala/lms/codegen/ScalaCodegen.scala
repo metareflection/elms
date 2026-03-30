@@ -15,7 +15,13 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
     s"$name: ${ty.render}"
   }.mkString(",")
 
-  extension [A](c: Const[A]) def render: String = s"${c.v}"
+  extension [A](c: Const[A])
+    def render: String = c.v match {
+      case s: String => s"\"$s\""
+      case arr: Array[_] =>
+        "Array(" + arr.map(v => s"$v").mkString(",") + ")"
+      case x         => s"$x"
+    }
 
   extension (ty: Type)
     private def render: String = ty match {
@@ -34,6 +40,11 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
     }
 
   extension (out: IndentedWriter)
+    private def invalidTerm(msg: String): Unit = {
+      Log.error(msg)
+      out.emit("???")
+    }
+
     private def emitFunction(fname: String, fdef: Function): Unit = {
       val Function(args, outty, body) = fdef
 
@@ -83,40 +94,65 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
             out.emitln("")
             out.emit("}")
           }
-          case _ => {
-            Log.error(s"BUG: IfThenElse should have exactly 3 children")
-            out.emit("???")
-          }
+          case _ => out.invalidTerm("BUG: IfThenElse should have exactly 3 children")
         }
       case While => children match {
           case Seq(guard, body) => {
             out.emit("while ")
             out.emitMaybeParenthesized(guard)
-            out.emit(" do {")
+            out.emitln(" do {")
             out.indented { out.emitTerm(body) }
-            out.emit("}")
+            out.emitln("}")
           }
-          case _ => {
-            Log.error(s"BUG: While should have exactly 2 children")
-            out.emit("???")
-          }
+          case _ => out.invalidTerm("BUG: While should have exactly 2 children")
         }
       case App => children match {
           case f +: args => {
             out.emitMaybeParenthesized(f)
             out.emitArgTerms(args)
           }
-          case _ => {
-            Log.error(s"BUG: function application with no children")
-            out.emit("???")
-          }
+          case _ => out.invalidTerm("BUG: function application with no children")
         }
-      case Plus         => out.emitBinop("+", children)
-      case Times        => out.emitBinop("*", children)
-      case Minus        => out.emitBinop("-", children)
-      case Equals       => out.emitBinop("==", children)
-      case And          => out.emitBinop("&&", children)
-      case Or           => out.emitBinop("||", children)
+      case Plus       => out.emitBinop("+", children)
+      case Times      => out.emitBinop("*", children)
+      case Minus      => out.emitBinop("-", children)
+      case Equals     => out.emitBinop("==", children)
+      case Lt         => out.emitBinop("<", children)
+      case Gt         => out.emitBinop(">", children)
+      case Le         => out.emitBinop("<=", children)
+      case Ge         => out.emitBinop(">=", children)
+      case And        => out.emitBinop("&&", children)
+      case Or         => out.emitBinop("||", children)
+      case Range      => out.emitBinop("until", children)
+      case RangeStart => children match {
+          case Seq(arg) => {
+            out.emitTerm(arg)
+            out.emit(".start")
+          }
+          case _ => out.invalidTerm(s"BUG: RangeStart invalid children")
+        }
+      case RangeEnd => children match {
+          case Seq(arg) => {
+            out.emitTerm(arg)
+            out.emit(".end")
+          }
+          case _ => out.invalidTerm(s"BUG: RangeEnd invalid children")
+        }
+      case RangeForEach => children match {
+          case Seq(V(name), st, end, body) => {
+            out.emit(s"for ($name <- ")
+            out.emitMaybeParenthesized(st)
+            out.emit(" until ")
+            out.emitMaybeParenthesized(end)
+            out.emitln(") {")
+            out.indented { out.emitTerm(body) }
+            out.emitln("")
+            out.emitln("}")
+          }
+          case Seq(_, _, _, _) => out
+              .invalidTerm("BUG: RangeForEach first child should be a Var")
+          case _ => out.invalidTerm("BUG: RangeForEach invalid children")
+        }
       case ArrayNew(ty) => {
         out.emit(s"new Array[${ty.render}]")
         out.emitArgTerms(children)
@@ -128,10 +164,7 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
             out.emitTerm(i)
             out.emit(")")
           }
-          case _ => {
-            Log.error(s"BUG: ArrayGet not enough children")
-            out.emit("???")
-          }
+          case _ => out.invalidTerm("BUG: ArrayGet invalid children")
         }
       case ArraySet => children match {
           case Seq(arr, i, x) => {
@@ -141,10 +174,14 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
             out.emit(") = ")
             out.emitTerm(x)
           }
-          case _ => {
-            Log.error(s"BUG: ArraySet not enough children")
-            out.emit("???")
+          case _ => out.invalidTerm(s"BUG: ArraySet invalid children")
+        }
+      case ArrayLength => children match {
+          case Seq(arr) => {
+            out.emitTerm(arr)
+            out.emit(".length")
           }
+          case _ => out.invalidTerm("BUG: ArrayLength invalid children")
         }
     }
 
