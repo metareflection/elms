@@ -1,7 +1,6 @@
 package lms.core
 
 import lms.core.Op._
-import lms.util.OverloadHack._
 
 trait StringOps extends PrimitiveOps {
   val stringLength: Rep[String => Int] = unsafeDeclare("String.length")

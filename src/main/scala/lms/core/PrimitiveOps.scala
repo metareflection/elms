@@ -5,7 +5,6 @@ import annotation.implicitNotFound
 
 import lms.runtime.Log
 import lms.core.Op._
-import lms.util.OverloadHack._
 
 trait PrimitiveOps extends Base {
   def __ifThenElse[T](c: Rep[Boolean], t: => Rep[T], e: => Rep[T]): Rep[T] =
