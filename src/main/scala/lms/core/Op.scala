@@ -2,36 +2,34 @@
 
 package lms.core
 
-sealed trait Op
+enum Op derives CanEqual {
+  case Const[T](val v: T)
 
-object Op {
-  case class Const[T](val v: T) extends Op
+  case App
 
-  case object App extends Op
+  case Plus
+  case Minus
+  case Times
 
-  case object Plus extends Op
-  case object Minus extends Op
-  case object Times extends Op
+  case Equals
+  case Lt
+  case Gt
+  case Le
+  case Ge
 
-  case object Equals extends Op
-  case object Lt extends Op
-  case object Gt extends Op
-  case object Le extends Op
-  case object Ge extends Op
+  case And
+  case Or
 
-  case object And extends Op
-  case object Or extends Op
+  case Range
+  case RangeForEach
+  case RangeStart
+  case RangeEnd
 
-  case object Range extends Op
-  case object RangeForEach extends Op
-  case object RangeStart extends Op
-  case object RangeEnd extends Op
+  case IfThenElse
+  case While
 
-  case object IfThenElse extends Op
-  case object While extends Op
-
-  case class ArrayNew(typ: Type) extends Op
-  case object ArrayGet extends Op
-  case object ArraySet extends Op
-  case object ArrayLength extends Op
+  case ArrayNew(typ: Type)
+  case ArrayGet
+  case ArraySet
+  case ArrayLength
 }
