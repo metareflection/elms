@@ -1,4 +1,6 @@
-package lms.ir.anf
+package lms.ir.simple
+
+// A bog-standard builder producing an IR in ANF form according to Rompf '16.
 
 import lms.util.Plumbing
 import lms.core.{Liftable, Type, Op}, Op._
