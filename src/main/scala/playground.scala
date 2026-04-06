@@ -1,21 +1,52 @@
 package lms
 
-import lms.prelude._
-import lms.prelude.given
-import lms.helpers._
+import lms.core.Op.*
+import lms.ir.opt.*
+import lms.codegen.ast.*
 
-trait Dsl extends DslOps {
-  @virtualize
-  def pow(x: Rep[Int], n: Int): Rep[Int] = { if n == 0 then 1 else x * pow(x, n - 1) }
-
-  def foo(f: Rep[Int => Int]) = f(1)
-}
-
-object Playground extends SnippetDriver[Int, Int] with Dsl {
-  def snippet(x: Rep[Int]) = pow(x, 4)
-}
+import Pattern.{Var => PVar, Node => PNode}
 
 @main
 def main() = {
-  println(Playground.code)
+  val graph = new EGraph()
+
+  val addcomm = Equivalence(
+    PNode(Plus, Vector(PVar("x"), PVar("y"))),
+    PNode(Plus, Vector(PVar("y"), PVar("x")))
+  )
+  val addassoc = Equivalence(
+    PNode(Plus, Vector(PVar("x"), PNode(Plus, Vector(PVar("y"), PVar("z"))))),
+    PNode(Plus, Vector(PNode(Plus, Vector(PVar("x"), PVar("y"))), PVar("z")))
+  )
+  val subnegate = Equivalence(
+    PNode(Plus, Vector(PVar("x"), PNode(Negate, Vector(PVar("y"))))),
+    PNode(Minus, Vector(PVar("x"), PVar("y")))
+  )
+  val sub = Rewrite(PNode(Minus, Vector(PVar("x"), PVar("x"))), PNode(Const(0), Vector()))
+  val zero = Rewrite(PNode(Plus, Vector(PVar("x"), PNode(Const(0), Vector()))), PVar("x"))
+
+  val rules = Seq(
+    addcomm,
+    addassoc,
+    subnegate,
+    sub,
+    zero
+  )
+
+  /*
+    E(Plus, Vector(
+      V("y"),
+      E(Minus, Vector(V("x"), V("y")))
+    ))
+   */
+  val x = graph.addVar("x")
+  //val y = graph.addVar("y")
+  //val minusy = graph.addNode(Negate, Vector(y))
+  //val xminusy = graph.addNode(Plus, Vector(y, minusy))
+  val z = graph.addNode(Const(0), Vector())
+  val result = graph.addNode(Plus, Vector(x, z))
+
+  graph.saturate(rules)
+
+  println(graph.extract(result))
 }

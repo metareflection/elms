@@ -113,6 +113,13 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
           }
           case _ => out.invalidTerm("BUG: function application with no children")
         }
+      case Negate => children match {
+        case Seq(t) => {
+          out.emit("-")
+          out.emitMaybeParenthesized(t)
+        }
+        case _ => out.invalidTerm("BUG: negate invalid children")
+      }
       case Plus       => out.emitBinop("+", children)
       case Times      => out.emitBinop("*", children)
       case Minus      => out.emitBinop("-", children)

@@ -7,6 +7,7 @@ enum Op derives CanEqual {
 
   case App
 
+  case Negate
   case Plus
   case Minus
   case Times

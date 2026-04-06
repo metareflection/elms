@@ -8,16 +8,16 @@ trait Logger {
 }
 
 object Logger {
-  def toStderr(prefix: String, msg: String)(using pos: SourceContext): Unit =
-    System.err.println(s"[${pos.render}] $prefix: $msg")
+  def toStderr(prefix: String, msg: String)(using pos: SourceContext): Unit = System.err
+    .println(s"[${pos.render}] $prefix: $msg")
 
-  def toStdout(prefix: String, msg: String)(using pos: SourceContext): Unit =
-    System.out.println(s"[${pos.render}] $prefix: $msg")
+  def toStdout(prefix: String, msg: String)(using pos: SourceContext): Unit = System.out
+    .println(s"[${pos.render}] $prefix: $msg")
 
-  def debugStderr(msg: String)(using SourceContext): Unit =    toStderr("Debug", msg)
-  def infoStderr(msg: String)(using SourceContext): Unit =    toStderr("Info", msg)
-  def warnStderr(msg: String)(using SourceContext): Unit =    toStderr("Warning", msg)
-  def errorStderr(msg: String)(using SourceContext): Unit =    toStderr("Error", msg)
+  def debugStderr(msg: String)(using SourceContext): Unit = toStderr("Debug", msg)
+  def infoStderr(msg: String)(using SourceContext): Unit = toStderr("Info", msg)
+  def warnStderr(msg: String)(using SourceContext): Unit = toStderr("Warning", msg)
+  def errorStderr(msg: String)(using SourceContext): Unit = toStderr("Error", msg)
 
   val default = new Logger {
     def debug(msg: String)(using pos: SourceContext): Unit = {}
