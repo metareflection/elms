@@ -1,0 +1,26 @@
+package lms.ir.opt
+
+import lms.core.{Liftable, Type, Op}
+import lms.codegen.ast.Program
+import lms.ir
+
+/*
+class Builder extends ir.Builder {
+  type Exp
+  type Name
+
+  def name(s: String): Name
+  def fresh(): Name
+  def variable(name: Name): Exp
+
+  def fun(name: Option[String], top: Boolean, args: Seq[(Name, Type)], outty: Type)(
+      body: => Exp
+  ): Exp
+
+  def lift[A: Liftable](x: A): Exp
+  def reflect(op: Op, children: Seq[Exp]): Exp
+  def region(f: => Exp): Exp
+
+  def extract(): Program
+}
+*/

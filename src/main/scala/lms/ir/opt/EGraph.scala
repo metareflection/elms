@@ -9,7 +9,10 @@ import lms.util.Plumbing.*
 
 import Pattern.{Var => PVar, Node => PNode}
 
-class EGraph(cfg: EGraph.Config = EGraph.Config()) {
+class EGraph(
+    rules: Seq[Rule],
+    cfg: EGraph.Config = EGraph.Config()
+) {
   import EGraph.*
   import ENode.*
 
@@ -27,7 +30,7 @@ class EGraph(cfg: EGraph.Config = EGraph.Config()) {
     if parent.id == ec.id then ec
     else {
       val result = find(parent)
-      //uf(ec.id) = result
+      // uf(ec.id) = result
       result
     }
   }
@@ -55,19 +58,28 @@ class EGraph(cfg: EGraph.Config = EGraph.Config()) {
   private def isCanonical(a: EClass): Boolean = uf(a.id) == a
   // private def ensureClass(ec: EClass): mutable.Set[ENode] = classes.getOrElseUpdate(find(ec), mutable.Set())
 
+  private def applyRewrites(node: ENode): Set[EClass] = {
+    rules.flatMap { rw => matchNode(rw.lhs, node).map(buildRHS(_, rw.rhs)) }.toSet
+  }
+
   private def add(nodeIn: ENode): EClass = {
     val node = canonicalize(nodeIn)
-    val result = nodes.get(node) match {
+    nodes.get(node) match {
       case Some(cls) => find(cls)
       case None      => {
+        val simpls = applyRewrites(node)
         val result = EClass(uf.length)
-        uf += result
-        nodes(node) = result
-        // ensureClass(result) += node
-        result
+        simpls.toSeq match {
+          case Nil => {
+            uf += result
+            nodes(node) = result
+            // ensureClass(result) += node
+            return result
+          }
+          case cls +: clss => clss.foldLeft(cls)(union)
+        }
       }
     }
-    result
   }
 
   def addNode(op: Op, children: Seq[EClass]): EClass = add(Node(op, children))
@@ -104,6 +116,7 @@ class EGraph(cfg: EGraph.Config = EGraph.Config()) {
 
   def ematch(pat: Pattern, cls: EClass): Seq[Subst] = {
     rebuild()
+    //println(s"attempting to ematch $pat with $cls")
     ematchImpl(0, pat, find(cls), Map())
   }
 
@@ -117,6 +130,23 @@ class EGraph(cfg: EGraph.Config = EGraph.Config()) {
         s <- ematchImpl(depth + 1, subpat, subcls, subst)
         s2 <- joinSubmatches(depth, rest, s ++ subst)
       } yield s2 ++ s
+  }
+
+  private def matchNode(pat: Pattern, node: ENode): Seq[Subst] = pat match {
+    case PVar(name)         => nodes.get(node).map(cls => Map((name, cls))).toSeq
+    case PNode(op, subpats) => matchNodeImpl(0, node, op, subpats, Map())
+  }
+
+  private def matchNodeImpl(
+      depth: Int,
+      node: ENode,
+      op: core.Op,
+      subpats: Seq[Pattern],
+      subst: Subst
+  ): Seq[Subst] = node match {
+    case Node(op2, children) if op == op2 && subpats.length == children.length =>
+      joinSubmatches(depth, subpats.zip(children), subst)
+    case _ => Seq()
   }
 
   private def ematchImpl(
@@ -134,11 +164,8 @@ class EGraph(cfg: EGraph.Config = EGraph.Config()) {
           case None       => Seq(subst + ((name, cls)))
         }
 
-      case PNode(op, subpats) => nodesInClass(cls).toSeq.flatMap {
-          case Node(op2, children) if op == op2 && subpats.length == children.length =>
-            joinSubmatches(depth, subpats.zip(children), subst)
-          case _ => Seq()
-        }
+      case PNode(op, subpats) => nodesInClass(cls).toSeq
+          .flatMap(matchNodeImpl(depth, _, op, subpats, subst))
     }
   }
 
@@ -148,24 +175,26 @@ class EGraph(cfg: EGraph.Config = EGraph.Config()) {
   }
 
   // returns true when saturated
-  def applyRules(rules: Seq[Rule]): Unit = {
+  def applyEquivalences(): Unit = {
     val uf2 = uf.toSeq
     val substs = for {
       cls <- uf2 if isCanonical(cls)
-      case Rule(lhs, rhs, oneWay) <- rules
+      case Equivalence(lhs, rhs) <- rules
       subst <- ematch(lhs, cls)
     } yield (cls, buildRHS(subst, rhs))
 
+    println("done")
     substs.foreach(union)
   }
 
-  def saturate(rules: Seq[Rule]): Unit = {
+  def saturate(): Unit = {
     var saturated = false
     var iterations = 0
 
     while !saturated && iterations < cfg.maxIterations do {
       iterations += 1
-      applyRules(rules)
+      //println(s"iterations: $iterations")
+      applyEquivalences()
       saturated = !dirty
     }
   }

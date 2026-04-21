@@ -8,8 +8,6 @@ import Pattern.{Var => PVar, Node => PNode}
 
 @main
 def main() = {
-  val graph = new EGraph()
-
   val addcomm = Equivalence(
     PNode(Plus, Vector(PVar("x"), PVar("y"))),
     PNode(Plus, Vector(PVar("y"), PVar("x")))
@@ -26,12 +24,14 @@ def main() = {
   val zero = Rewrite(PNode(Plus, Vector(PVar("x"), PNode(Const(0), Vector()))), PVar("x"))
 
   val rules = Seq(
-    addcomm,
+    //addcomm,
     addassoc,
     subnegate,
     sub,
     zero
   )
+
+  val graph = new EGraph(rules)
 
   /*
     E(Plus, Vector(
@@ -40,13 +40,12 @@ def main() = {
     ))
    */
   val x = graph.addVar("x")
-  //val y = graph.addVar("y")
-  //val minusy = graph.addNode(Negate, Vector(y))
-  //val xminusy = graph.addNode(Plus, Vector(y, minusy))
-  val z = graph.addNode(Const(0), Vector())
-  val result = graph.addNode(Plus, Vector(x, z))
+  val y = graph.addVar("y")
+  val minusy = graph.addNode(Negate, Vector(y))
+  val yminusy = graph.addNode(Plus, Vector(y, minusy))
+  val result = graph.addNode(Plus, Vector(x, yminusy))
 
-  graph.saturate(rules)
+  graph.saturate()
 
   println(graph.extract(result))
 }
