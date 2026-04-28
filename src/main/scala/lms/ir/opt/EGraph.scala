@@ -52,14 +52,17 @@ class EGraph(
 
   private def canonicalize(enode: ENode): ENode = enode match {
     case Node(op, children) => Node(op, children.map(find))
-    case V(name)            => V(name)
+    case NamedVar(name)            => NamedVar(name)
   }
 
   private def isCanonical(a: EClass): Boolean = uf(a.id) == a
   // private def ensureClass(ec: EClass): mutable.Set[ENode] = classes.getOrElseUpdate(find(ec), mutable.Set())
 
   private def applyRewrites(node: ENode): Set[EClass] = {
-    rules.flatMap { rw => matchNode(rw.lhs, node).map(buildRHS(_, rw.rhs)) }.toSet
+    (for {
+      case rw: Rewrite <- rules
+      subst <- matchNode(rw.lhs, node)
+    } yield buildRHS(subst, rw.rhs)).toSet
   }
 
   private def add(nodeIn: ENode): EClass = {
@@ -84,7 +87,7 @@ class EGraph(
 
   def addNode(op: Op, children: Seq[EClass]): EClass = add(Node(op, children))
 
-  def addVar(name: String): EClass = add(V(name))
+  def addNamedVar(name: String): EClass = add(NamedVar(name))
 
   private def nodesInClass(cls: EClass): Set[ENode] =
     // classes(find(cls)).toSet
@@ -116,7 +119,6 @@ class EGraph(
 
   def ematch(pat: Pattern, cls: EClass): Seq[Subst] = {
     rebuild()
-    //println(s"attempting to ematch $pat with $cls")
     ematchImpl(0, pat, find(cls), Map())
   }
 
@@ -200,7 +202,7 @@ class EGraph(
   }
 
   private def extractNode(node: ENode): Option[ast.Term] = node match {
-    case V(name)            => Some(ast.V(name))
+    case NamedVar(name)            => Some(ast.V(name))
     case Node(op, children) => children.map(extractCls).traverse.map(ast.E(op, _))
   }
 
@@ -217,7 +219,7 @@ class EGraph(
 object EGraph {
   private enum ENode derives CanEqual {
     case Node(op: Op, children: Seq[EClass])
-    case V(name: String)
+    case NamedVar(name: String)
   }
 
   enum CountOrInf derives CanEqual {
@@ -244,5 +246,8 @@ object EGraph {
     }
 
   case class EClass(id: Int) derives CanEqual
-  case class Config(maxIterations: CountOrInf = 100)
+  case class Config(
+    maxIterations: CountOrInf = 100,
+    namePrefix: String = "x"
+  )
 }

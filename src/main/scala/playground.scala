@@ -39,8 +39,8 @@ def main() = {
       E(Minus, Vector(V("x"), V("y")))
     ))
    */
-  val x = graph.addVar("x")
-  val y = graph.addVar("y")
+  val x = graph.addNamedVar("x")
+  val y = graph.addNamedVar("y")
   val minusy = graph.addNode(Negate, Vector(y))
   val yminusy = graph.addNode(Plus, Vector(y, minusy))
   val result = graph.addNode(Plus, Vector(x, yminusy))

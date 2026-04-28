@@ -2,33 +2,24 @@ package lms.ir.simple
 
 // A bog-standard builder producing an IR in ANF form according to Rompf '16.
 
-import lms.util.Plumbing
 import lms.core.{Liftable, Type, Op}, Op._
 import lms.ir
 import lms.runtime.Log
 import lms.codegen.ast, ast._
+import lms.util.{Plumbing, Counter}
 
 class Builder extends ir.Builder {
   type Name = String
 
   type Exp = ast.Term
 
-  var counter: Int = 0
+  val counter = Counter()
   var roots: List[(Name, ast.Function)] = Nil
   var stBlock: List[(Name, Exp)] = Nil
 
-  def init(): Unit = {
-    counter = 0
-    roots = Nil
-  }
-
   def name(s: String): Name = s
 
-  def fresh(): Name = {
-    val result = counter
-    counter += 1
-    s"x$result"
-  }
+  def fresh(): Name = s"x${counter.tick()}"
 
   def variable(name: Name): Exp = V(name)
 
