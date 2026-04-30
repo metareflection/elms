@@ -96,16 +96,6 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
           }
           case _ => out.invalidTerm("BUG: IfThenElse should have exactly 3 children")
         }
-      case While => children match {
-          case Seq(guard, body) => {
-            out.emit("while ")
-            out.emitMaybeParenthesized(guard)
-            out.emitln(" do {")
-            out.indented { out.emitTerm(body) }
-            out.emitln("}")
-          }
-          case _ => out.invalidTerm("BUG: While should have exactly 2 children")
-        }
       case App => children match {
           case f +: args => {
             out.emitMaybeParenthesized(f)

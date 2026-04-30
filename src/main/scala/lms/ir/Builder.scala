@@ -7,6 +7,7 @@ abstract class Builder {
   type Exp
   type Name
 
+  // CR cwong: rethink this API
   def name(s: String): Name
   def fresh(): Name
   def variable(name: Name): Exp

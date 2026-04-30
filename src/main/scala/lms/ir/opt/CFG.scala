@@ -5,8 +5,8 @@ import lms.core.Op
 import EGraph.EClass
 
 enum Stmt {
-  case Effect(dst: String, op: Op, children: Seq[EClass])
+  case Return(node: EClass)
   case Block(body: Seq[Stmt])
+  case Effect(op: Op.Effectful, children: Seq[EClass])
   case IfThenElse(cond: EClass, thn: Block, els: Block)
-  // TODO: Think about how to represent whiles
 }

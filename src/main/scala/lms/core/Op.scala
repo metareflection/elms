@@ -2,35 +2,46 @@
 
 package lms.core
 
-enum Op derives CanEqual {
-  case Const[T](val v: T)
+sealed trait Op(protected val kind: Op.Kind) derives CanEqual
 
-  case App
+object Op {
+  protected enum Kind {
+    case Pure
+    case Control
+    case Effect
+  }
 
-  case Negate
-  case Plus
-  case Minus
-  case Times
+  sealed abstract class Pure extends Op(Kind.Pure)
+  sealed abstract class Effectful extends Op(Kind.Effect)
+  sealed abstract class Control extends Op(Kind.Pure)
 
-  case Equals
-  case Lt
-  case Gt
-  case Le
-  case Ge
+  case class Const[T](val v: T) extends Pure
 
-  case And
-  case Or
+  case object App extends Effectful
 
-  case Range
-  case RangeForEach
-  case RangeStart
-  case RangeEnd
+  case object Negate extends Pure
+  case object Plus extends Pure
+  case object Minus extends Pure
+  case object Times extends Pure
 
-  case IfThenElse
-  case While
+  case object Equals extends Pure
+  case object Lt extends Pure
+  case object Gt extends Pure
+  case object Le extends Pure
+  case object Ge extends Pure
 
-  case ArrayNew(typ: Type)
-  case ArrayGet
-  case ArraySet
-  case ArrayLength
+  case object And extends Pure
+  case object Or extends Pure
+
+  case object Range extends Pure
+  case object RangeForEach extends Control
+  case object RangeStart extends Pure
+  case object RangeEnd extends Pure
+
+  case object IfThenElse extends Control
+
+  case class ArrayNew(val typ: Type) extends Effectful
+  case object ArrayGet extends Effectful
+  case object ArraySet extends Effectful
+  case object ArrayLength extends Pure
 }

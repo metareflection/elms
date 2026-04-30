@@ -22,15 +22,11 @@ class EGraph(
   // Maintained lazily, updated on rebuild
   private val nodes: mutable.Map[ENode, EClass] = mutable.Map()
 
-  // Maintained eagerly, updated on union or addition
-  // private val classes: mutable.Map[EClass, mutable.Set[ENode]] = mutable.Map()
-
   private def find(ec: EClass): EClass = {
     val parent = uf(ec.id)
     if parent.id == ec.id then ec
     else {
       val result = find(parent)
-      // uf(ec.id) = result
       result
     }
   }
@@ -42,8 +38,6 @@ class EGraph(
     else {
       dirty = true
       uf(a.id) = b
-      // classes(b) ++= classes(a)
-      // classes(a) = classes(b)
       b
     }
   }
@@ -56,7 +50,6 @@ class EGraph(
   }
 
   private def isCanonical(a: EClass): Boolean = uf(a.id) == a
-  // private def ensureClass(ec: EClass): mutable.Set[ENode] = classes.getOrElseUpdate(find(ec), mutable.Set())
 
   private def applyRewrites(node: ENode): Set[EClass] = {
     (for {

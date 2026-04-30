@@ -1,6 +1,7 @@
 package lms.codegen.ast
 
 import lms.core.{Op, Type}
+import lms.util.Plumbing.*
 
 sealed abstract class Term
 
