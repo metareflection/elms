@@ -3,7 +3,7 @@ package lms.core
 import scala.util.TupledFunction
 import annotation.implicitNotFound
 
-import lms.runtime.Log
+import lms.runtime.*
 import lms.core.Op._
 
 trait PrimitiveOps extends Base {
@@ -12,7 +12,7 @@ trait PrimitiveOps extends Base {
 
   given __virtualizedBoolConvInternal: Conversion[Rep[Boolean], Boolean] with
     def apply(x: Rep[Boolean]) = {
-      throw new RuntimeException(
+      throw new LMSRuntimeException(
         "attempted to call __virtualizedBoolConvInternal (did you forget to virtualize?)"
       );
     }

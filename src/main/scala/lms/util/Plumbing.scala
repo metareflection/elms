@@ -6,6 +6,10 @@ object Plumbing {
   def onLeft[A1, B, A2](f: A1 => A2)(x: A1, y: B): (A2, B) = (f(x), y)
   def onRight[A, B1, B2](f: B1 => B2)(x: A, y: B1): (A, B2) = (x, f(y))
 
+  extension [A, B] (xy: (A, B))
+    def mapLeft[A2](f: A => A2): (A2, B) = onLeft(f)(xy._1, xy._2)
+    def mapRight[B2](f: B => B2): (A, B2) = onRight(f)(xy._1, xy._2)
+
   extension [A] (xs: Seq[A])
     def filterMap[B](f: A => Option[B]): Seq[B] =
       xs.map(f).filter(_.isDefined).map(_.get)

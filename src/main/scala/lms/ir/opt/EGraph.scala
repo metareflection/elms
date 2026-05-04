@@ -2,7 +2,7 @@ package lms.ir.opt
 
 import scala.collection.mutable
 
-import lms.core, core.Op, core.Op.*
+import lms.core, core.Op
 import lms.codegen.ast
 import lms.runtime.Log
 import lms.util.Plumbing.*
@@ -78,7 +78,7 @@ class EGraph(
     }
   }
 
-  def addNode(op: Op, children: Seq[EClass]): EClass = add(Node(op, children))
+  def addNode(op: Op.Pure, children: Seq[EClass]): EClass = add(Node(op, children))
 
   def addNamedVar(name: String): EClass = add(NamedVar(name))
 
@@ -211,7 +211,7 @@ class EGraph(
 
 object EGraph {
   private enum ENode derives CanEqual {
-    case Node(op: Op, children: Seq[EClass])
+    case Node(op: Op.Pure, children: Seq[EClass])
     case NamedVar(name: String)
   }
 

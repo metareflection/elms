@@ -2,6 +2,12 @@ package lms.util.collection
 
 import scala.collection.mutable
 
+extension [T](seq: Seq[T])
+  def uncons: Option[(T, Seq[T])] = seq match {
+    case head +: tail => Some(head, tail)
+    case _ => None
+  }
+
 extension [T](seq: mutable.Seq[T])
   def clear(): Unit = seq.drop(seq.size)
 

@@ -18,6 +18,7 @@ abstract class Builder {
 
   def lift[A: Liftable](x: A): Exp
   def reflect(op: Op, children: Seq[Exp]): Exp
+
   def region(f: => Exp): Exp
 
   def extract(): Program

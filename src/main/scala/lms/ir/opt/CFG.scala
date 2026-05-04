@@ -6,7 +6,8 @@ import EGraph.EClass
 
 enum Stmt {
   case Return(node: EClass)
-  case Block(body: Seq[Stmt])
+  case Let(x: String, lhs: Stmt, tail: Stmt)
   case Effect(op: Op.Effectful, children: Seq[EClass])
-  case IfThenElse(cond: EClass, thn: Block, els: Block)
+  case If(cond: EClass, thn: Stmt, els: Stmt)
+  case RangeFor(v: String, st: EClass, end: EClass, body: Stmt)
 }

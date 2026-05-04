@@ -1,11 +1,33 @@
 package lms
 
+import lms.prelude.{_, given}
 import lms.core.Op.*
 import lms.ir.opt.*
 import lms.codegen.ast.*
 
+import lms.helpers.{SnippetDriver, DslOps}
+
 import Pattern.{Var => PVar, Node => PNode}
 
+trait Dsl extends DslOps {
+  @virtualize
+  def pow(x: Rep[Int], n: Int): Rep[Int] = { if n == 0 then 1 else x * pow(x, n - 1) }
+}
+
+object Playground
+    extends SnippetDriver[Int, Int](irBuilder =
+      Builder(Builder.Config(Seq(), EGraph.Config()))
+    )
+    with Dsl {
+  def snippet(x: Rep[Int]) = pow(x, 4)
+}
+
+@main
+def main() = {
+  println(Playground.code)
+}
+
+/*
 @main
 def main() = {
   val addcomm = Equivalence(
@@ -38,7 +60,7 @@ def main() = {
       V("y"),
       E(Minus, Vector(V("x"), V("y")))
     ))
-   */
+ */
   val x = graph.addNamedVar("x")
   val y = graph.addNamedVar("y")
   val minusy = graph.addNode(Negate, Vector(y))
@@ -49,3 +71,4 @@ def main() = {
 
   println(graph.extract(result))
 }
+ */

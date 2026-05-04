@@ -4,7 +4,7 @@ import lms.core.Op
 
 enum Pattern {
   case Var(name: String)
-  case Node(op: Op, children: Vector[Pattern])
+  case Node(op: Op.Pure, children: Vector[Pattern])
 }
 
 sealed trait Rule {

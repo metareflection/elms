@@ -68,8 +68,7 @@ class Builder extends ir.Builder {
 
   def extract(): ast.Program = {
     if (!stBlock.isEmpty) {
-      val x: Unit = Log
-        .warning("INTERNAL BUG: attempted to `extract` with non-empty `stBlock`")
+      Log.warning("BUG: attempted to `extract` with non-empty `stBlock`")
     }
 
     ast.Program(roots)
