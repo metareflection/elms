@@ -11,15 +11,24 @@ import Pattern.{Var => PVar, Node => PNode}
 
 trait Dsl extends DslOps {
   @virtualize
-  def pow(x: Rep[Int], n: Int): Rep[Int] = { if n == 0 then 1 else x * pow(x, n - 1) }
+  def f(x: Rep[String], n: Int): Rep[Int] = {
+    length(x) + n
+  }
 }
 
+@virtualize
 object Playground
     extends SnippetDriver[Int, Int](irBuilder =
       Builder(Builder.Config(Seq(), EGraph.Config()))
-    )
-    with Dsl {
-  def snippet(x: Rep[Int]) = pow(x, 4)
+    ) with DslOps
+ {
+      def snippet(x: Rep[Int]) = {
+        def compute(b: Rep[Boolean]): Rep[Int] = {
+          // the if is deferred to the second stage
+          if (b) 1 else x
+        }
+        compute(x === 1)
+      }
 }
 
 @main

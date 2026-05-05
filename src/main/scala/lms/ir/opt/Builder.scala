@@ -212,7 +212,12 @@ private class FunctionBuilder(
               (prefixAcc ++ prefix, terms :+ term)
           }.mapRight(ast.E(op, _))
       }
-      case If(cond, thn, els)         => ???
+      case If(cond, thn, els)         => {
+        val (prefix, c) = elabCls(cond, cache)
+        val t = elab(thn, cache)
+        val e = elab(els, cache)
+        (prefix, ast.E(Op.IfThenElse, Seq(c, t, e)))
+      }
       case RangeFor(v, st, end, body) => ???
     }
 }
