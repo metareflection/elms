@@ -1,4 +1,4 @@
-package lms.ir.opt
+package lms.ir.eqsat
 
 import lms.core.Op
 

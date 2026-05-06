@@ -2,7 +2,7 @@ package lms
 
 import lms.prelude.{_, given}
 import lms.core.Op.*
-import lms.ir.opt.*
+import lms.ir.eqsat.*
 import lms.codegen.ast.*
 
 import lms.helpers.{SnippetDriver, DslOps}
