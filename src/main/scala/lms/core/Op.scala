@@ -2,18 +2,12 @@
 
 package lms.core
 
-sealed trait Op(protected val kind: Op.Kind) derives CanEqual
+sealed trait Op derives CanEqual
 
 object Op {
-  protected enum Kind {
-    case Pure
-    case Control
-    case Effect
-  }
-
-  sealed abstract class Pure extends Op(Kind.Pure)
-  sealed abstract class Effectful extends Op(Kind.Effect)
-  sealed abstract class Control extends Op(Kind.Pure)
+  sealed abstract class Pure extends Op
+  sealed abstract class Effectful extends Op
+  sealed abstract class Control extends Op
 
   case class Const[T](val v: T) extends Pure
 

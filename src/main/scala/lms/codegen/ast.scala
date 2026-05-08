@@ -3,7 +3,7 @@ package lms.codegen.ast
 import lms.core.{Op, Type}
 import lms.util.Plumbing.*
 
-sealed abstract class Term
+sealed abstract class Term derives CanEqual
 
 case class E(op: Op, children: Seq[Term]) extends Term
 case class V(name: String) extends Term
@@ -21,3 +21,6 @@ object Term {
     case Function(_, _, body) => 1 + size(body)
   }
 }
+
+extension (t: Term)
+  def size: Int = Term.size(t)
