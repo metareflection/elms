@@ -7,6 +7,7 @@ import lms.ir
 abstract class Driver extends Base {
   protected val builder: ir.Builder
   protected type Exp = builder.Exp
+  protected type Name = builder.Name
   case class Rep[+T](wrapped: Exp)
 
   def variable[A](name: builder.Name): Rep[A] = unsafeWrap(builder.variable(name))
@@ -39,9 +40,13 @@ abstract class Driver extends Base {
   override def unsafeRegister(op: Op, children: Exp*): Exp = builder
     .reflect(op, children.toVector)
 
-  override def unsafeFresh[T](): Rep[T] = variable(builder.fresh())
-
   override def unsafeDeclare[T](name: String): Rep[T] = variable(builder.name(name))
+
+  override def unsafeWithFresh[A, B](f: (Name, Rep[A]) => Rep[B]): Rep[B] = {
+    val name = builder.fresh()
+    val v = variable(name)
+    f(name, v)
+  }
 
   def extract(): ast.Program = builder.extract()
 }

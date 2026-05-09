@@ -9,6 +9,7 @@ import lms.util.{Counter, SourceContext}
 import lms.util.Plumbing.*
 import lms.util.collection.*
 import lms.runtime.*
+import lms.util.typeclasses.{*, given}
 
 import EGraph.EClass
 import Stmt.*
@@ -143,7 +144,7 @@ private class FunctionBuilder(
               .push(name, cls, If(guard.unwrap, thn.asStmt, els.asStmt))
           case _ => throw LMSRuntimeException("BUG: IfThenElse invalid children")
         }
-      case Op.RangeForEach => children match {
+      case x: Op.RangeForEach[_] => children match {
           case Seq(x, st, end, body) => regions
               .push(name, cls, RangeFor(???, st.unwrap, end.unwrap, asStmt(body)))
           case _ => throw LMSRuntimeException("BUG: RangeForEach invalid children")

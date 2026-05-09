@@ -2,8 +2,11 @@ package lms.core
 
 import scala.Conversion
 
+import lms.util.typeclasses.*
+
 trait Base {
   type Rep[+T]
+  protected type Name: Nameable
   protected type Exp
 
   def unit[A: Liftable](x: A): Rep[A]
@@ -31,6 +34,7 @@ trait Base {
   def unsafeReflect[T](op: Op, children: Rep[Any]*): Rep[T] =
     unsafeWrap(unsafeRegister(op, children.map(unsafeUnwrap)*))
 
-  def unsafeFresh[T](): Rep[T]
   def unsafeDeclare[T](name: String): Rep[T]
+
+  def unsafeWithFresh[A, B](f: (Name, Rep[A]) => Rep[B]): Rep[B]
 }

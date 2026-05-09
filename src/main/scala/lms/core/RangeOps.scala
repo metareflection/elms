@@ -15,11 +15,8 @@ trait RangeOps extends Base {
     def end: Rep[Int] = unsafeReflect(Op.RangeEnd, lhs)
 
     def foreach(body: Rep[Int] => Rep[Unit]): Unit = {
-      // CR-someday cwong: Ideally, we'd want `RangeForEach` to carry the name of
-      // its bound variable with it, rather than hiding it as a `variable` child.
-      // We have to do it this way due to the fact that `Name` is a type from the
-      // `ir.Builder`, rather than being built into `Base`.
-      val v: Rep[Int] = unsafeFresh()
-      unsafeReflect(Op.RangeForEach, v, lhs.start, lhs.end, region(body(v)))
+      unsafeWithFresh { (name: Name, v: Rep[Int]) =>
+        unsafeReflect(Op.RangeForEach(name), lhs.start, lhs.end, region(body(v)))
+      }
     }
 }

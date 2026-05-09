@@ -2,6 +2,8 @@
 
 package lms.core
 
+import lms.util.typeclasses.*
+
 sealed trait Op derives CanEqual
 
 object Op {
@@ -28,7 +30,10 @@ object Op {
   case object Or extends Pure
 
   case object Range extends Pure
-  case object RangeForEach extends Control
+
+  case class RangeForEach[Name: Nameable](x: Name) extends Control {
+    def renderBoundVar: String = x.render
+  }
   case object RangeStart extends Pure
   case object RangeEnd extends Pure
 

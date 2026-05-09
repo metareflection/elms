@@ -2,12 +2,15 @@ package lms.ir
 
 import lms.core.{Liftable, Type, Op}
 import lms.codegen.ast.Program
+import lms.util.typeclasses.*
 
-abstract class Builder {
+trait Builder {
   type Exp
-  type Name
 
-  // CR cwong: rethink this API
+  // CR cwong: Rethink this API. It is natural to assume that some backends may
+  // want different `Name` types, but in practice this is beginning to feel
+  // overengineered and not very good.
+  type Name: Nameable
   def name(s: String): Name
   def fresh(): Name
   def variable(name: Name): Exp

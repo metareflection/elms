@@ -135,9 +135,9 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
           }
           case _ => out.invalidTerm(s"BUG: RangeEnd invalid children")
         }
-      case RangeForEach => children match {
-          case Seq(V(name), st, end, body) => {
-            out.emit(s"for ($name <- ")
+      case r: RangeForEach[_] => children match {
+          case Seq(st, end, body) => {
+            out.emit(s"for (${r.renderBoundVar} <- ")
             out.emitMaybeParenthesized(st)
             out.emit(" until ")
             out.emitMaybeParenthesized(end)
