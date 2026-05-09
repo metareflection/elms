@@ -11,24 +11,45 @@ import Pattern.{Var => PVar, Node => PNode}
 
 trait Dsl extends DslOps {
   @virtualize
-  def f(x: Rep[String], n: Int): Rep[Int] = {
-    length(x) + n
-  }
+  def f(x: Rep[String], n: Int): Rep[Int] = { length(x) + n }
 }
 
 @virtualize
 object Playground
-    extends SnippetDriver[Int, Int](irBuilder =
+    extends SnippetDriver[Array[Int], Array[Int]](irBuilder =
       Builder(Builder.Config(Seq(), EGraph.Config()))
-    ) with DslOps
- {
-      def snippet(x: Rep[Int]) = {
-        def compute(b: Rep[Boolean]): Rep[Int] = {
-          // the if is deferred to the second stage
-          if (b) 1 else x
+    )
+    with DslOps {
+  val A = scala.Array
+
+  val a = A(
+    A(1, 1, 1, 1, 1), // dense
+    A(0, 0, 0, 0, 0), // null
+    A(0, 0, 1, 0, 0), // sparse
+    A(0, 0, 0, 0, 0),
+    A(0, 0, 1, 0, 1)
+  )
+
+  def snippet(v: Rep[Array[Int]]) = {
+
+    def matrix_vector_prod(a0: Array[Array[Int]], v: Rep[Array[Int]]) = {
+      val n = a0.length
+      val v1 = newArray[Int](n)
+
+      for (i <- (0 `until` n): Range) {
+        val sparse = a0(i).count(_ != 0) < 3
+        if (sparse) {
+          for (j <- (0 `until` n): Range) { v1(i) = v1(i) + a(i)(j) * v(j) }
+        } else {
+          for (j <- (0 `until` n): Rep[Range]) { v1(i) = v1(i) + a(i)(j) * v(j) }
         }
-        compute(x === 1)
       }
+      v1
+    }
+
+    val v1 = matrix_vector_prod(a, v)
+    v1
+  }
 }
 
 @main

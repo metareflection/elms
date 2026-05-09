@@ -38,9 +38,7 @@ private class RegionBuilder(fresh: () => Name) {
     body.clear()
   }
 
-  def push(name: Name, cls: EClass, stmt: Stmt): Unit = {
-    body += ((name, cls, stmt))
-  }
+  def push(name: Name, cls: EClass, stmt: Stmt): Unit = { body += ((name, cls, stmt)) }
 
   def ret(cls: EClass): Unit = { tail = Some(cls) }
 
@@ -116,6 +114,18 @@ private class FunctionBuilder(
     def unapply(handle: Builder.Handle): Option[EClass] = Some(handle.unwrap)
   }
 
+  def lambda(
+      mname: Option[Name],
+      args: Seq[(Name, Type)],
+      outty: Type,
+      body: Builder.Handle
+  ): Builder.Handle = {
+    val name = mname.getOrElse { fresh() }
+    val cls = graph.addNamedVar(name)
+    regions.push(name, cls, Lambda(args, outty, body.asStmt))
+    Local(cls)
+  }
+
   def reflect(op: Op, children: Seq[Builder.Handle]): Builder.Handle = op match {
     case pure: Op.Pure     => reflectPure(pure, children.map(_.unwrap))
     case eff: Op.Effectful => reflectEffect(eff, children.map(_.unwrap))
@@ -145,9 +155,9 @@ private class FunctionBuilder(
               .push(name, cls, If(guard.unwrap, thn.asStmt, els.asStmt))
           case _ => throw LMSRuntimeException("BUG: IfThenElse invalid children")
         }
-      case Op.RangeForEach(name) => children match {
-          case Seq(x, st, end, body) => regions
-              .push(name, cls, RangeFor(???, st.unwrap, end.unwrap, asStmt(body)))
+      case Op.RangeForEach(x) => children match {
+          case Seq(st, end, body) => regions
+              .push(name, cls, RangeFor(x, st.unwrap, end.unwrap, asStmt(body)))
           case _ => throw LMSRuntimeException("BUG: RangeForEach invalid children")
         }
     }
@@ -180,6 +190,8 @@ private class FunctionBuilder(
       .orElse { parent.flatMap { _.get(cls) } }
 
     def update(cls: EClass, name: Name): Unit = { vs(cls) = name }
+
+    def enter: ScopeMap = ScopeMap(Some(this))
   }
 
   def elab(s: Stmt, cache: ScopeMap): ast.Term = {
@@ -189,41 +201,48 @@ private class FunctionBuilder(
 
   private type ElabOut = (Seq[(Name, ast.Term)], ast.Term)
 
-  def elabCls(cls: EClass, cache: ScopeMap): ElabOut =
-    cache.get(cls) match {
-      case Some(v) => (Seq(), ast.V(v))
-      case None    => {
-        val name = fresh()
-        val result = graph.extract(cls)
-          .getOrElse { throw LMSRuntimeException(s"BUG: invalid EClass $cls") }
-        cache(cls) = name
-        (Seq((name, result)), ast.V(name))
-      }
+  def elabCls(cls: EClass, cache: ScopeMap): ElabOut = cache.get(cls) match {
+    case Some(v) => (Seq(), ast.V(v))
+    case None    => {
+      val name = fresh()
+      val result = graph.extract(cls)
+        .getOrElse { throw LMSRuntimeException(s"BUG: invalid EClass $cls") }
+      cache(cls) = name
+      (Seq((name, result)), ast.V(name))
     }
+  }
 
-  def elabImpl(s: Stmt, cache: ScopeMap): ElabOut =
-    s match {
-      case Return(cls)    => elabCls(cls, cache)
-      case Let(x, e1, e2) => {
-        val (prefix1, t1) = elabImpl(e1, cache)
-        val (prefix2, t2) = elabImpl(e2, cache)
-        ((prefix1 :+ (x, t1)) ++ prefix2, t2)
-      }
-      case Effect(op, children) => {
-        children.map(elabCls(_, cache))
-          .foldLeft(Vector.empty[(Name, (ast.Term))], Vector.empty[ast.Term]) {
-            case ((prefixAcc, terms), (prefix, term)) =>
-              (prefixAcc ++ prefix, terms :+ term)
-          }.mapRight(ast.E(op, _))
-      }
-      case If(cond, thn, els)         => {
-        val (prefix, c) = elabCls(cond, cache)
-        val t = elab(thn, cache)
-        val e = elab(els, cache)
-        (prefix, ast.E(Op.IfThenElse, Seq(c, t, e)))
-      }
-      case RangeFor(v, st, end, body) => ???
+  def elabImpl(s: Stmt, cache: ScopeMap): ElabOut = s match {
+    case Return(cls)    => elabCls(cls, cache)
+    case Let(x, e1, e2) => {
+      val (prefix1, t1) = elabImpl(e1, cache)
+      val (prefix2, t2) = elabImpl(e2, cache)
+      ((prefix1 :+ (x, t1)) ++ prefix2, t2)
     }
+    case Effect(op, children) => {
+      children.map(elabCls(_, cache))
+        .foldLeft(Vector.empty[(Name, (ast.Term))], Vector.empty[ast.Term]) {
+          case ((prefixAcc, terms), (prefix, term)) =>
+            (prefixAcc ++ prefix, terms :+ term)
+        }.mapRight(ast.E(op, _))
+    }
+    case If(cond, thn, els) => {
+      val (prefix, c) = elabCls(cond, cache)
+      val t = elab(thn, cache.enter)
+      val e = elab(els, cache.enter)
+      (prefix, ast.E(Op.IfThenElse, Seq(c, t, e)))
+    }
+    case Lambda(args, outty, body) =>
+      (Seq(), ast.Function(args, outty, elab(body, cache.enter)))
+    case RangeFor(x, st, end, body) => {
+      val (prefix1, stt) = elabCls(st, cache)
+      val (prefix2, endt) = elabCls(end, cache)
+      (
+        prefix1 ++ prefix2,
+        ast.E(Op.RangeForEach(x), Seq(stt, endt, elab(body, cache.enter)))
+      )
+    }
+  }
 }
 
 class Builder(cfg: Builder.Config) extends ir.Builder {
@@ -269,7 +288,12 @@ class Builder(cfg: Builder.Config) extends ir.Builder {
 
   def fun(name: Option[Name], top: Boolean, args: Seq[(Name, Type)], outty: Type)(
       body: => Exp
-  ): Exp = if top then topfun(name, args, outty, body) else { ??? }
+  ): Exp =
+    if top then topfun(name, args, outty, body)
+    else {
+      ensureBuilder("attempted to define lambda outside function")
+        .lambda(name, args, outty, region(body))
+    }
 
   def lift[A: Liftable](x: A): Exp = reflect(Op.Const(x), Nil)
 
