@@ -2,23 +2,24 @@ package lms.core
 
 import scala.Conversion
 
-import lms.util.typeclasses.*
+import lms.ir.Name
 
 trait Base {
   type Rep[+T]
-  protected type Name: Nameable
   protected type Exp
 
   def unit[A: Liftable](x: A): Rep[A]
 
-  def fun[A: Typable, B: Typable](name: Option[String])(
+  def fun[A: Typable, B: Typable](name: Option[Name])(
       f: Rep[A] => Rep[B]
   ): Rep[A => B]
   def lam[A: Typable, B: Typable](f: Rep[A] => Rep[B]): Rep[A => B]
 
   def fun[A: Typable, B: Typable](f: Rep[A] => Rep[B]): Rep[A => B] = fun(None)(f)
-  def fun[A: Typable, B: Typable](name: String)(f: Rep[A] => Rep[B]): Rep[A => B] =
+  def fun[A: Typable, B: Typable](name: Name)(f: Rep[A] => Rep[B]): Rep[A => B] =
     fun(Some(name))(f)
+  def fun[A: Typable, B: Typable](name: String)(f: Rep[A] => Rep[B]): Rep[A => B] =
+    fun(Name.from(name))(f)
 
   def region[A](exp: => Rep[A]): Rep[A]
 

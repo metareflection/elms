@@ -2,6 +2,7 @@ package lms.ir.eqsat
 
 import scala.collection.mutable
 
+import lms.ir.Name
 import lms.core, core.Op
 import lms.codegen.ast
 import lms.runtime.Log
@@ -46,7 +47,7 @@ class EGraph(
 
   private def canonicalize(enode: ENode): ENode = enode match {
     case Node(op, children) => Node(op, children.map(find))
-    case NamedVar(name)            => NamedVar(name)
+    case Var(name)            => Var(name)
   }
 
   private def isCanonical(a: EClass): Boolean = uf(a.id) == a
@@ -80,7 +81,7 @@ class EGraph(
 
   def addNode(op: Op.Pure, children: Seq[EClass]): EClass = add(Node(op, children))
 
-  def addNamedVar(name: String): EClass = add(NamedVar(name))
+  def addNamedVar(name: Name): EClass = add(Var(name))
 
   private def nodesInClass(cls: EClass): Set[ENode] =
     // classes(find(cls)).toSet
@@ -195,7 +196,7 @@ class EGraph(
   }
 
   private def extractNode(node: ENode): Option[ast.Term] = node match {
-    case NamedVar(name)            => Some(ast.V(name))
+    case Var(name)            => Some(ast.V(name))
     case Node(op, children) => children.map(extractCls).traverse.map(ast.E(op, _))
   }
 
@@ -212,7 +213,7 @@ class EGraph(
 object EGraph {
   private enum ENode derives CanEqual {
     case Node(op: Op.Pure, children: Seq[EClass])
-    case NamedVar(name: String)
+    case Var(name: Name)
   }
 
   enum CountOrInf derives CanEqual {

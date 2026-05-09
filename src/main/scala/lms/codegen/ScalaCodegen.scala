@@ -2,6 +2,7 @@ package lms.codegen
 
 import lms.core.{Op, Type}, Type._, Op._
 import lms.codegen.ast, ast._
+import lms.ir.Name
 import lms.util.IndentedWriter
 import lms.runtime.Log
 
@@ -11,8 +12,8 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
     prog.functions.foreach { (fname, fdef) => w.emitFunction(fname, fdef) }
   }
 
-  private def renderArgs(args: Seq[(String, Type)]): String = args.map { (name, ty) =>
-    s"$name: ${ty.render}"
+  private def renderArgs(args: Seq[(Name, Type)]): String = args.map { (name, ty) =>
+    s"${name.render(cfg.varPrefix)}: ${ty.render}"
   }.mkString(",")
 
   extension [A](c: Const[A])
@@ -45,11 +46,11 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
       out.emit("???")
     }
 
-    private def emitFunction(fname: String, fdef: Function): Unit = {
+    private def emitFunction(fname: Name, fdef: Function): Unit = {
       val Function(args, outty, body) = fdef
 
       val argsS = renderArgs(args)
-      val header = s"def $fname($argsS): ${outty.render} = {"
+      val header = s"def ${fname.render(cfg.varPrefix)}($argsS): ${outty.render} = {"
       out.emitln(header)
       out.indented { out.emitTerm(body) }
       out.emitln("")
@@ -58,9 +59,9 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
 
     private def emitTerm(t: Term): Unit = t match {
       case E(op, children) => out.emitCompound(op, children)
-      case V(name)         => out.emit(name)
+      case V(name)         => out.emit(name.render(cfg.varPrefix))
       case Let(x, e1, e2)  => {
-        out.emit(s"val $x = ")
+        out.emit(s"val ${x.render(cfg.varPrefix)} = ")
         out.emitTerm(e1)
         out.emitln("")
         out.emitTerm(e2)
@@ -135,9 +136,9 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
           }
           case _ => out.invalidTerm(s"BUG: RangeEnd invalid children")
         }
-      case r: RangeForEach[_] => children match {
+      case RangeForEach(name) => children match {
           case Seq(st, end, body) => {
-            out.emit(s"for (${r.renderBoundVar} <- ")
+            out.emit(s"for (${name.render(cfg.varPrefix)} <- ")
             out.emitMaybeParenthesized(st)
             out.emit(" until ")
             out.emitMaybeParenthesized(end)

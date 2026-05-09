@@ -4,23 +4,17 @@ package lms.ir.simple
 
 import lms.core.{Liftable, Type, Op}, Op._
 import lms.ir
+import lms.ir.Name
 import lms.runtime.Log
 import lms.codegen.ast, ast._
 import lms.util.{Plumbing, Counter}
 import lms.util.typeclasses.given
 
 class Builder extends ir.Builder {
-  type Name = String
-
   type Exp = ast.Term
 
-  val counter = Counter()
   var roots: List[(Name, ast.Function)] = Nil
   var stBlock: List[(Name, Exp)] = Nil
-
-  def name(s: String): Name = s
-
-  def fresh(): Name = s"x${counter.tick()}"
 
   def variable(name: Name): Exp = V(name)
 
@@ -32,7 +26,7 @@ class Builder extends ir.Builder {
   }
 
   override def fun(
-      mname: Option[String],
+      mname: Option[Name],
       top: Boolean,
       args: Seq[(Name, Type)],
       outty: Type

@@ -1,6 +1,7 @@
 package lms.core
 
 import lms.core.Op
+import lms.ir.Name
 
 trait RangeOps extends Base {
   extension (st: Rep[Int])

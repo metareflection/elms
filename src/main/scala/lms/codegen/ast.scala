@@ -1,17 +1,18 @@
 package lms.codegen.ast
 
+import lms.ir.Name
 import lms.core.{Op, Type}
 import lms.util.Plumbing.*
 
 sealed abstract class Term derives CanEqual
 
 case class E(op: Op, children: Seq[Term]) extends Term
-case class V(name: String) extends Term
-case class Let(x: String, e1: Term, e2: Term) extends Term
+case class V(name: Name) extends Term
+case class Let(x: Name, e1: Term, e2: Term) extends Term
 
-case class Function(args: Seq[(String, Type)], outty: Type, body: Term) extends Term
+case class Function(args: Seq[(Name, Type)], outty: Type, body: Term) extends Term
 
-case class Program(functions: Seq[(String, Function)])
+case class Program(functions: Seq[(Name, Function)])
 
 object Term {
   def size(e: Term): Int = e match {

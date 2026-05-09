@@ -5,6 +5,7 @@ import scala.collection.mutable
 import lms.core.{Liftable, Type, Op}
 import lms.codegen.ast
 import lms.ir
+import lms.ir.Name
 import lms.util.{Counter, SourceContext}
 import lms.util.Plumbing.*
 import lms.util.collection.*
@@ -17,19 +18,19 @@ import Stmt.*
 object Builder {
   case class Config(rules: Seq[Rule], cfg: EGraph.Config)
   enum Handle {
-    case Global(name: String)
+    case Global(name: Name)
     case Local(cls: EClass)
     // The EClass here is solely so downstream users can register nodes in the
     // EGraph; think of it as `v <- body`
     //
     // CR cwong: This representation is very scary; we're likely to drop effects
     // if we never actually write the body back into the CFG.
-    case Region(v: String, cls: EClass, body: Stmt)
+    case Region(v: Name, cls: EClass, body: Stmt)
   }
 }
 
-private class RegionBuilder(fresh: () => String) {
-  val body: mutable.ArrayBuffer[(String, EClass, Stmt)] = mutable.ArrayBuffer()
+private class RegionBuilder(fresh: () => Name) {
+  val body: mutable.ArrayBuffer[(Name, EClass, Stmt)] = mutable.ArrayBuffer()
   var tail: Option[EClass] = None
 
   def clear(): Unit = {
@@ -37,7 +38,7 @@ private class RegionBuilder(fresh: () => String) {
     body.clear()
   }
 
-  def push(name: String, cls: EClass, stmt: Stmt): Unit = {
+  def push(name: Name, cls: EClass, stmt: Stmt): Unit = {
     body += ((name, cls, stmt))
   }
 
@@ -54,7 +55,7 @@ private class RegionBuilder(fresh: () => String) {
   }
 }
 
-private class RegionStack(fresh: () => String) {
+private class RegionStack(fresh: () => Name) {
   private val base: RegionBuilder = RegionBuilder(fresh)
   private val stack: mutable.Stack[RegionBuilder] = mutable.Stack()
 
@@ -66,7 +67,7 @@ private class RegionStack(fresh: () => String) {
     base.extract()
   }
 
-  def push(name: String, cls: EClass, stmt: Stmt): Unit = top.push(name, cls, stmt)
+  def push(name: Name, cls: EClass, stmt: Stmt): Unit = top.push(name, cls, stmt)
 
   def ret(cls: EClass): Unit = top.ret(cls)
 
@@ -78,8 +79,8 @@ private class RegionStack(fresh: () => String) {
 private class FunctionBuilder(
     rules: Seq[Rule],
     config: EGraph.Config,
-    predefs: Set[String],
-    fresh: () => String
+    predefs: Set[Name],
+    fresh: () => Name
 ) {
   import Builder.Handle.*
 
@@ -88,9 +89,9 @@ private class FunctionBuilder(
   private val env = Map.from(predefs.map { name => name -> graph.addNamedVar(name) })
   private val regions = RegionStack(fresh)
 
-  def register(name: String): EClass = graph.addNamedVar(name)
+  def register(name: Name): EClass = graph.addNamedVar(name)
 
-  def ensureClass(name: String): EClass = env.get(name).getOrElse {
+  def ensureClass(name: Name): EClass = env.get(name).getOrElse {
     Log.warning(s"BUG: unregistered name $name was used before it was declared")
     register(name)
   }
@@ -144,7 +145,7 @@ private class FunctionBuilder(
               .push(name, cls, If(guard.unwrap, thn.asStmt, els.asStmt))
           case _ => throw LMSRuntimeException("BUG: IfThenElse invalid children")
         }
-      case x: Op.RangeForEach[_] => children match {
+      case Op.RangeForEach(name) => children match {
           case Seq(x, st, end, body) => regions
               .push(name, cls, RangeFor(???, st.unwrap, end.unwrap, asStmt(body)))
           case _ => throw LMSRuntimeException("BUG: RangeForEach invalid children")
@@ -156,7 +157,7 @@ private class FunctionBuilder(
   def ret(handle: Builder.Handle): Unit = regions.ret(handle.unwrap)
 
   def openRegion(): Unit = regions.openRegion()
-  def closeRegion(): (String, EClass, Stmt) = {
+  def closeRegion(): (Name, EClass, Stmt) = {
     val stmt = regions.closeRegion()
     val name = fresh()
     val cls = graph.addNamedVar(name)
@@ -173,12 +174,12 @@ private class FunctionBuilder(
 
   class ScopeMap(
       parent: Option[ScopeMap] = None,
-      vs: mutable.Map[EClass, String] = mutable.Map()
+      vs: mutable.Map[EClass, Name] = mutable.Map()
   ) {
-    def get(cls: EClass): Option[String] = vs.get(cls)
+    def get(cls: EClass): Option[Name] = vs.get(cls)
       .orElse { parent.flatMap { _.get(cls) } }
 
-    def update(cls: EClass, name: String): Unit = { vs(cls) = name }
+    def update(cls: EClass, name: Name): Unit = { vs(cls) = name }
   }
 
   def elab(s: Stmt, cache: ScopeMap): ast.Term = {
@@ -186,7 +187,9 @@ private class FunctionBuilder(
     prefix.foldRight(tail) { case ((x, e), acc) => ast.Let(x, e, acc) }
   }
 
-  def elabCls(cls: EClass, cache: ScopeMap): (Seq[(String, ast.Term)], ast.Term) =
+  private type ElabOut = (Seq[(Name, ast.Term)], ast.Term)
+
+  def elabCls(cls: EClass, cache: ScopeMap): ElabOut =
     cache.get(cls) match {
       case Some(v) => (Seq(), ast.V(v))
       case None    => {
@@ -198,7 +201,7 @@ private class FunctionBuilder(
       }
     }
 
-  def elabImpl(s: Stmt, cache: ScopeMap): (Seq[(String, ast.Term)], ast.Term) =
+  def elabImpl(s: Stmt, cache: ScopeMap): ElabOut =
     s match {
       case Return(cls)    => elabCls(cls, cache)
       case Let(x, e1, e2) => {
@@ -208,7 +211,7 @@ private class FunctionBuilder(
       }
       case Effect(op, children) => {
         children.map(elabCls(_, cache))
-          .foldLeft(Vector.empty[(String, (ast.Term))], Vector.empty[ast.Term]) {
+          .foldLeft(Vector.empty[(Name, (ast.Term))], Vector.empty[ast.Term]) {
             case ((prefixAcc, terms), (prefix, term)) =>
               (prefixAcc ++ prefix, terms :+ term)
           }.mapRight(ast.E(op, _))
@@ -225,21 +228,15 @@ private class FunctionBuilder(
 
 class Builder(cfg: Builder.Config) extends ir.Builder {
   type Exp = Builder.Handle
-  type Name = String
 
   import Builder.Handle.*
 
-  private val counter = Counter()
-
-  private val builtins = mutable.Set[String]()
-  private val functions = mutable.Map[String, ast.Function]()
+  private val builtins = mutable.Set[Name]()
+  private val functions = mutable.Map[Name, ast.Function]()
 
   private var current: Option[FunctionBuilder] = None
 
-  def fresh(): Name = s"x${counter.tick()}"
-  def name(s: String): Name = s
-
-  def predefs(): Set[String] = builtins.toSet ++ functions.keySet
+  def predefs(): Set[Name] = builtins.toSet ++ functions.keySet
 
   def variable(name: Name): Exp = current match {
     case None => {
@@ -250,12 +247,12 @@ class Builder(cfg: Builder.Config) extends ir.Builder {
   }
 
   private def topfun(
-      mname: Option[String],
+      mname: Option[Name],
       args: Seq[(Name, Type)],
       outty: Type,
       body: => Exp
   ): Exp = {
-    val name = this.name(mname.getOrElse { fresh() })
+    val name = mname.getOrElse { fresh() }
 
     val builder = FunctionBuilder(cfg.rules, cfg.cfg, predefs(), this.fresh)
     current = Some(builder)
@@ -270,7 +267,7 @@ class Builder(cfg: Builder.Config) extends ir.Builder {
   private def ensureBuilder(msg: String): FunctionBuilder = current
     .getOrElse { throw LMSRuntimeException(s"BUG: $msg") }
 
-  def fun(name: Option[String], top: Boolean, args: Seq[(Name, Type)], outty: Type)(
+  def fun(name: Option[Name], top: Boolean, args: Seq[(Name, Type)], outty: Type)(
       body: => Exp
   ): Exp = if top then topfun(name, args, outty, body) else { ??? }
 
