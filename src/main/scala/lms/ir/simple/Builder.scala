@@ -8,7 +8,6 @@ import lms.ir.Name
 import lms.runtime.Log
 import lms.codegen.ast, ast._
 import lms.util.{Plumbing, Counter}
-import lms.util.typeclasses.given
 
 class Builder extends ir.Builder {
   type Exp = ast.Term
