@@ -13,7 +13,6 @@ class VirtualizeTests extends SnapshotFunSuite {
       def pow(x: Rep[Int], n: Int): Rep[Int] = if n == 0 then 1 else x * pow(x, n - 1)
       def snippet(x: Rep[Int]): Rep[Int] = pow(x, 5)
     }
-
     check("pow5", Snippet.code)
   }
 
@@ -21,7 +20,6 @@ class VirtualizeTests extends SnapshotFunSuite {
     object Snippet extends SnippetDriver[Boolean, Int] with DslOps {
       def snippet(x: Rep[Boolean]): Rep[Int] = if x then 1 else 0
     }
-
     check("if-basic", Snippet.code)
   }
 
@@ -31,7 +29,6 @@ class VirtualizeTests extends SnapshotFunSuite {
         if x then { if x then 1 else 2 } else { 0 }
       }
     }
-
     check("if-nested", Snippet.code)
   }
 
@@ -67,5 +64,15 @@ class VirtualizeTests extends SnapshotFunSuite {
       }
     }
     check("func-tutorial", Snippet.code)
+  }
+
+  test("recursive functions") {
+    object Snippet extends SnippetDriver[Int, Int] with DslOps {
+      def fact: Rep[Int => Int] = fun { (x: Rep[Int]) =>
+        if x === 0 then unit(1) else snippet(x - 1)
+      }
+      def snippet(x: Rep[Int]) = fact(x)
+    }
+    check("fact", Snippet.code)
   }
 }

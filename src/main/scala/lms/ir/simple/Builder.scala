@@ -25,24 +25,23 @@ class Builder extends ir.Builder {
   }
 
   override def fun(
-      mname: Option[Name],
+      name: Name,
       top: Boolean,
       args: Seq[(Name, Type)],
       outty: Type
-  )(body: => Exp): Exp = {
-    val name = mname match {
-      case Some(s) => s
-      case None    => fresh()
+  ): FunctionStub = {
+    def fill(body: => Exp): Unit = {
+      if top then stBlock = Nil
+
+      val bodyexp = region(body)
+      val f = ast.Function(args, outty, bodyexp)
+
+      if top then roots ::= (name, f) else stBlock ::= (name, f)
     }
 
-    if top then stBlock = Nil
-
-    val bodyexp = region(body)
-    val f = ast.Function(args, outty, bodyexp)
-
-    if top then roots ::= (name, f) else stBlock ::= (name, f)
-
-    variable(name)
+    FunctionStub(
+      variable(name), fill
+    )
   }
 
   def lift[A: Liftable](x: A): Exp = ast.E(Const(x), Nil)

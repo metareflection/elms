@@ -1,35 +1,50 @@
 package lms.core
 
+import scala.collection.mutable
+
 import lms.core.Op
 import lms.codegen.ast
 import lms.ir, ir.Name
+import lms.util.ClosureCompare
 
-abstract class Driver extends Base {
+abstract class Driver extends Base with ClosureCompare {
   protected val builder: ir.Builder
   protected type Exp = builder.Exp
   case class Rep[+T](wrapped: Exp)
 
   def variable[A](name: Name): Rep[A] = unsafeWrap(builder.variable(name))
 
+  val funTable: mutable.Map[String, Exp] = mutable.Map()
+
   def makeFun[A: Typable, B: Typable](
-      name: Option[Name],
+      name: Name,
       top: Boolean,
       f: Rep[A] => Rep[B]
   ): Rep[A => B] = {
-    val argname = builder.fresh()
-    val argty = summon[Typable[A]].identity
-    val outty = summon[Typable[B]].identity
-    unsafeWrap(builder.fun(name, top, Vector((argname, argty)), outty) {
-      unsafeUnwrap(f(variable(argname)))
-    })
+    val key = canonicalize(f.asInstanceOf[Serializable])
+    funTable.get(key) match {
+      case Some(symb) => unsafeWrap(symb)
+      case None       => {
+        val argname = builder.fresh()
+        val argty = summon[Typable[A]].identity
+        val outty = summon[Typable[B]].identity
+
+        val stub = builder.fun(name, top, Vector((argname, argty)), outty)
+        funTable(key) = stub.symbol
+
+        stub.fill { unsafeUnwrap(f(variable(argname))) }
+
+        unsafeWrap(stub.symbol)
+      }
+    }
   }
 
   override def unit[A: Liftable](x: A): Rep[A] = Rep(builder.lift(x))
   override def fun[A: Typable, B: Typable](name: Option[Name])(
       f: Rep[A] => Rep[B]
-  ): Rep[A => B] = makeFun[A, B](name, true, f)
+  ): Rep[A => B] = makeFun[A, B](name.getOrElse { builder.fresh() }, true, f)
   override def lam[A: Typable, B: Typable](f: Rep[A] => Rep[B]): Rep[A => B] =
-    makeFun[A, B](None, false, f)
+    makeFun[A, B](builder.fresh(), false, f)
 
   override def region[A](exp: => Rep[A]): Rep[A] =
     unsafeWrap(builder.region { unsafeUnwrap(exp) })

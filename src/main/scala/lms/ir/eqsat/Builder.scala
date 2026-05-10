@@ -10,7 +10,6 @@ import lms.util.{Counter, SourceContext}
 import lms.util.Plumbing.*
 import lms.util.collection.*
 import lms.runtime.*
-import lms.util.typeclasses.{*, given}
 
 import EGraph.EClass
 import Stmt.*
@@ -114,17 +113,15 @@ private class FunctionBuilder(
     def unapply(handle: Builder.Handle): Option[EClass] = Some(handle.unwrap)
   }
 
+  def symbol(name: Name): EClass = graph.addNamedVar(name)
+
   def lambda(
-      mname: Option[Name],
+      name: Name,
+      cls: EClass,
       args: Seq[(Name, Type)],
       outty: Type,
       body: Builder.Handle
-  ): Builder.Handle = {
-    val name = mname.getOrElse { fresh() }
-    val cls = graph.addNamedVar(name)
-    regions.push(name, cls, Lambda(args, outty, body.asStmt))
-    Local(cls)
-  }
+  ): Unit = regions.push(name, cls, Lambda(args, outty, body.asStmt))
 
   def reflect(op: Op, children: Seq[Builder.Handle]): Builder.Handle = op match {
     case pure: Op.Pure     => reflectPure(pure, children.map(_.unwrap))
@@ -250,14 +247,20 @@ class Builder(cfg: Builder.Config) extends ir.Builder {
 
   import Builder.Handle.*
 
-  private val builtins = mutable.Set[Name]()
-  private val functions = mutable.Map[Name, ast.Function]()
+  private enum FEntry derives CanEqual {
+    case Stub
+    case F(func: ast.Function)
+  }
+  import FEntry.*
 
-  private var current: Option[FunctionBuilder] = None
+  private val builtins = mutable.Set[Name]()
+  private val functions = mutable.Map[Name, FEntry]()
+
+  private var current: mutable.Stack[FunctionBuilder] = mutable.Stack()
 
   def predefs(): Set[Name] = builtins.toSet ++ functions.keySet
 
-  def variable(name: Name): Exp = current match {
+  def variable(name: Name): Exp = current.peek match {
     case None => {
       builtins.add(name)
       Global(name)
@@ -265,35 +268,37 @@ class Builder(cfg: Builder.Config) extends ir.Builder {
     case Some(ctx) => Local(ctx.register(name))
   }
 
-  private def topfun(
-      mname: Option[Name],
-      args: Seq[(Name, Type)],
-      outty: Type,
-      body: => Exp
-  ): Exp = {
-    val name = mname.getOrElse { fresh() }
-
-    val builder = FunctionBuilder(cfg.rules, cfg.cfg, predefs(), this.fresh)
-    current = Some(builder)
-    val tail = body
-    builder.ret(tail)
-    val result = builder.extract
-    current = None
-    functions(name) = ast.Function(args, outty, result)
-    Global(name)
-  }
-
-  private def ensureBuilder(msg: String): FunctionBuilder = current
+  private def ensureBuilder(msg: String): FunctionBuilder = current.peek
     .getOrElse { throw LMSRuntimeException(s"BUG: $msg") }
 
-  def fun(name: Option[Name], top: Boolean, args: Seq[(Name, Type)], outty: Type)(
-      body: => Exp
-  ): Exp =
-    if top then topfun(name, args, outty, body)
-    else {
-      ensureBuilder("attempted to define lambda outside function")
-        .lambda(name, args, outty, region(body))
+  private def topfun(name: Name, args: Seq[(Name, Type)], outty: Type): FunctionStub = {
+    def fill(body: => Exp): Unit = {
+      val builder = FunctionBuilder(cfg.rules, cfg.cfg, predefs(), this.fresh)
+      current.push(builder)
+      val tail = body
+      builder.ret(tail)
+      val result = builder.extract
+      current.pop()
+      functions(name) = F(ast.Function(args, outty, result))
     }
+    functions(name) = Stub
+    FunctionStub(Global(name), fill)
+  }
+
+  private def lambda(name: Name, args: Seq[(Name, Type)], outty: Type): FunctionStub = {
+    val builder = ensureBuilder("attempted to define lambda outside function")
+    val cls = builder.symbol(name)
+    def fill(body: => Exp): Unit = builder.lambda(name, cls, args, outty, region(body))
+
+    FunctionStub(Local(cls), fill)
+  }
+
+  def fun(
+      name: Name,
+      top: Boolean,
+      args: Seq[(Name, Type)],
+      outty: Type
+  ): FunctionStub = if top then topfun(name, args, outty) else lambda(name, args, outty)
 
   def lift[A: Liftable](x: A): Exp = reflect(Op.Const(x), Nil)
 
@@ -309,5 +314,11 @@ class Builder(cfg: Builder.Config) extends ir.Builder {
     Region(name, cls, body)
   }
 
-  def extract(): ast.Program = ast.Program(functions.toSeq)
+  def extract(): ast.Program = ast.Program(functions.toSeq.filterMap {
+    case (name, F(func)) => Some((name, func))
+    case (_, Stub) => {
+      Log.warning(s"BUG: attempted to `extract` with function $name still stubbed")
+      None
+    }
+  })
 }

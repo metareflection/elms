@@ -4,8 +4,13 @@ import lms.core.{Liftable, Type, Op}
 import lms.codegen.ast.Program
 import lms.util.Counter
 
-trait Builder {
+abstract class Builder {
   type Exp
+
+  protected case class FunctionStub(
+    symbol: Exp,
+    fill: (=> Exp) => Unit
+  )
 
   private val counter = Counter()
 
@@ -13,9 +18,8 @@ trait Builder {
   def fresh(): Name = Fresh(counter.tick())
   def variable(name: Name): Exp
 
-  def fun(name: Option[Name], top: Boolean, args: Seq[(Name, Type)], outty: Type)(
-      body: => Exp
-  ): Exp
+  def fun(name: Name, top: Boolean, args: Seq[(Name, Type)], outty: Type):
+    FunctionStub
 
   def lift[A: Liftable](x: A): Exp
   def reflect(op: Op, children: Seq[Exp]): Exp

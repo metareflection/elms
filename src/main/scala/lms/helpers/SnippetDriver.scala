@@ -12,7 +12,7 @@ abstract class SnippetDriver[A: Typable, B: Typable](
   def snippet(x: Rep[A]): Rep[B]
 
   lazy val code: String = {
-    fun[A, B]("snippet")(snippet)
+    fun[A, B]("snippet") { x => snippet(x) }
     codegen.render(extract())
   }
 }

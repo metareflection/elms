@@ -13,7 +13,7 @@ class ShonanTest extends SnapshotFunSuite {
   val under = "shonan/"
 
   abstract class DslDriver[A: Typable, B: Typable]
-      extends SnippetDriver[A, B] with DslOps
+    extends SnippetDriver[A, B] with DslOps
 
   val A = scala.Array
 
@@ -45,7 +45,7 @@ class ShonanTest extends SnapshotFunSuite {
   }
 
   test("shonan-hmm1b") {
-    object Snippet extends DslDriver[Array[Int], Array[Int]] {
+    object Snippet extends DslDriver[Array[Int], Array[Int]] with java.io.Serializable {
       def snippet(v: Rep[Array[Int]]) = {
 
         val x = 100 - 5
