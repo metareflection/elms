@@ -3,15 +3,15 @@ package lms.core
 import lms.core.Op._
 
 trait StringOps extends PrimitiveOps {
-  val stringLength: Rep[String => Int] = unsafeDeclare("String.length")
-  val stringTake: Rep[(String, Int) => String] = unsafeDeclare("String.take")
-  val stringDrop: Rep[(String, Int) => String] = unsafeDeclare("String.drop")
-  val stringStartsWith: Rep[(String, String) => Boolean] =
+  lazy val stringLength: Rep[String => Int] = unsafeDeclare("String.length")
+  lazy val stringTake: Rep[(String, Int) => String] = unsafeDeclare("String.take")
+  lazy val stringDrop: Rep[(String, Int) => String] = unsafeDeclare("String.drop")
+  lazy val stringStartsWith: Rep[(String, String) => Boolean] =
     unsafeDeclare("String.startsWith")
-  val stringEndsWith: Rep[(String, String) => Boolean] =
+  lazy val stringEndsWith: Rep[(String, String) => Boolean] =
     unsafeDeclare("String.endsWith")
-  val stringCharAt: Rep[(String, Int) => Char] = unsafeDeclare("String.charAt")
-  val stringSubstring: Rep[(String, Int, Int) => String] =
+  lazy val stringCharAt: Rep[(String, Int) => Char] = unsafeDeclare("String.charAt")
+  lazy val stringSubstring: Rep[(String, Int, Int) => String] =
     unsafeDeclare("String.substring")
 
   extension (s: Rep[String])

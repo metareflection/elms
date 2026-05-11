@@ -15,7 +15,7 @@ import EGraph.EClass
 import Stmt.*
 
 object Builder {
-  case class Config(rules: Seq[Rule], cfg: EGraph.Config)
+  case class Config(rules: Seq[Rule], cfg: EGraph.Config = EGraph.Config())
   enum Handle {
     case Global(name: Name)
     case Local(cls: EClass)

@@ -13,20 +13,22 @@ import lms.helpers.{SnippetDriver, DslOps}
 import Pattern.{Var => PVar, Node => PNode}
 
 @virtualize
-object Playground extends SnippetDriver[Int, Int] with DslOps {
-  override val codegen = lms.codegen.ScalaCodegen()
-  override val builder = Builder(Builder.Config(Seq(), EGraph.Config()))
-
+trait Dsl extends DslOps {
   def fact: Rep[Int => Int] = fun { (x: Rep[Int]) =>
     if x === 0 then unit(1) else x * fact(x - 1)
   }
+}
+
+object Playground extends SnippetDriver[Int, Int] with Dsl {
+  override val builder = pipeline.simple.Builder()
+  override val codegen = lms.codegen.ScalaCodegen()
 
   def snippet(v: Rep[Int]): Rep[Int] = { fact(v) }
 }
 
 @main
 def main() = {
-  println(Playground.code)
+  println(Playground.code())
 }
 
 /*

@@ -2,8 +2,8 @@ package lms.core
 
 trait Builtins extends PrimitiveOps {
   object Functions {
-    val print: Rep[String => Unit] = unsafeDeclare("print")
-    val println: Rep[String => Unit] = unsafeDeclare("println")
+    lazy val print: Rep[String => Unit] = unsafeDeclare("print")
+    lazy val println: Rep[String => Unit] = unsafeDeclare("println")
   }
 
   object Builtins {
