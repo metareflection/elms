@@ -1,4 +1,4 @@
-package lms.ir.eqsat
+package lms.pipeline.eqsat
 
 import lms.core.Op
 

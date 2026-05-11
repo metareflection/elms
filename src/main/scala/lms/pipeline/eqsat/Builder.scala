@@ -1,11 +1,11 @@
-package lms.ir.eqsat
+package lms.pipeline.eqsat
 
 import scala.collection.mutable
 
 import lms.core.{Type, Op}
 import lms.codegen.ast
-import lms.ir
-import lms.ir.Name
+import lms.pipeline
+import lms.pipeline.Name
 import lms.util.{Counter, SourceContext}
 import lms.util.Plumbing.*
 import lms.util.collection.*
@@ -242,7 +242,7 @@ private class FunctionBuilder(
   }
 }
 
-class Builder(cfg: Builder.Config) extends ir.Builder {
+class Builder(cfg: Builder.Config) extends pipeline.Builder {
   type Exp = Builder.Handle
 
   import Builder.Handle.*

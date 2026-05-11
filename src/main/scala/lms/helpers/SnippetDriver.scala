@@ -1,7 +1,7 @@
 package lms.helpers
 
 import lms.core.{Driver, Typable}
-import lms.ir, ir.simple
+import lms.pipeline, pipeline.simple
 import lms.codegen.{Backend, ScalaCodegen}
 
 abstract class SnippetDriver[A: Typable, B: Typable] extends Driver {
@@ -16,6 +16,6 @@ abstract class SnippetDriver[A: Typable, B: Typable] extends Driver {
 }
 
 abstract class SimpleDriver[A: Typable, B: Typable] extends SnippetDriver[A, B] {
-  override val builder = ir.simple.Builder()
+  override val builder = pipeline.simple.Builder()
   override val codegen = ScalaCodegen()
 }

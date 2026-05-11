@@ -3,7 +3,7 @@ package lms.core
 import scala.Conversion
 import annotation.implicitNotFound
 
-import lms.ir.Name
+import lms.pipeline.Name
 
 trait Base {
   type Rep[+T]

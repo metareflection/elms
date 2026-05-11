@@ -4,11 +4,11 @@ import scala.collection.mutable
 
 import lms.core.Op
 import lms.codegen.ast
-import lms.ir, ir.Name
+import lms.pipeline, pipeline.Name
 import lms.util.ClosureCompare
 
 abstract class Driver extends Base with ClosureCompare {
-  protected val builder: ir.Builder
+  protected val builder: pipeline.Builder
   protected type Exp = builder.Exp
   case class Rep[+T](wrapped: Exp)
 

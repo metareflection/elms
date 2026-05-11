@@ -2,7 +2,7 @@
 
 package lms.core
 
-import lms.ir.Name
+import lms.pipeline.Name
 
 sealed trait Op derives CanEqual
 

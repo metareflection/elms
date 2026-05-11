@@ -1,5 +1,7 @@
 package lms.test
 
+import scala.language.implicitConversions
+
 import lms.prelude._
 import lms.helpers.DslOps
 

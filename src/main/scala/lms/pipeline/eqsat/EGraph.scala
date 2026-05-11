@@ -1,9 +1,9 @@
-package lms.ir.eqsat
+package lms.pipeline.eqsat
 
 import scala.collection.mutable
 import scala.language.implicitConversions
 
-import lms.ir.Name
+import lms.pipeline.Name
 import lms.core, core.Op
 import lms.codegen.ast
 import lms.runtime.Log

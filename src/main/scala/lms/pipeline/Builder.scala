@@ -1,4 +1,4 @@
-package lms.ir
+package lms.pipeline
 
 import lms.core.{Type, Op}
 import lms.codegen.ast.Program

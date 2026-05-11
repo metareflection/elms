@@ -1,7 +1,7 @@
 package lms.core
 
 import lms.core.Op
-import lms.ir.Name
+import lms.pipeline.Name
 
 trait RangeOps extends PrimitiveOps {
   extension (st: Rep[Int])

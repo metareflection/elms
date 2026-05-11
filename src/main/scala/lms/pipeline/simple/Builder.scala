@@ -1,15 +1,15 @@
-package lms.ir.simple
+package lms.pipeline.simple
 
 // A bog-standard builder producing an IR in ANF form according to Rompf '16.
 
 import lms.core.{Type, Op}, Op._
-import lms.ir
-import lms.ir.Name
+import lms.pipeline
+import lms.pipeline.Name
 import lms.runtime.Log
 import lms.codegen.ast, ast._
 import lms.util.{Plumbing, Counter}
 
-class Builder extends ir.Builder {
+class Builder extends pipeline.Builder {
   type Exp = ast.Term
 
   var roots: List[(Name, ast.Function)] = Nil

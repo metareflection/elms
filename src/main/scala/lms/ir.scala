@@ -1,4 +1,4 @@
-package lms.ir
+package lms.pipeline
 
 sealed abstract class Name {
   def render(prefix: String): String
