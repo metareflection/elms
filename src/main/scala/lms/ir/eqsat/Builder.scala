@@ -2,7 +2,7 @@ package lms.ir.eqsat
 
 import scala.collection.mutable
 
-import lms.core.{Liftable, Type, Op}
+import lms.core.{Type, Op}
 import lms.codegen.ast
 import lms.ir
 import lms.ir.Name
@@ -299,8 +299,6 @@ class Builder(cfg: Builder.Config) extends ir.Builder {
       args: Seq[(Name, Type)],
       outty: Type
   ): FunctionStub = if top then topfun(name, args, outty) else lambda(name, args, outty)
-
-  def lift[A: Liftable](x: A): Exp = reflect(Op.Const(x), Nil)
 
   def reflect(op: Op, children: Seq[Exp]): Exp =
     ensureBuilder("attempted to `reflect` outside function").reflect(op, children)

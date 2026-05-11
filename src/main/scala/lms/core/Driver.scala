@@ -39,7 +39,6 @@ abstract class Driver extends Base with ClosureCompare {
     }
   }
 
-  override def unit[A: Liftable](x: A): Rep[A] = Rep(builder.lift(x))
   override def fun[A: Typable, B: Typable](name: Option[Name])(
       f: Rep[A] => Rep[B]
   ): Rep[A => B] = makeFun[A, B](name.getOrElse { builder.fresh() }, true, f)

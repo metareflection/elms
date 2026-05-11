@@ -1,6 +1,6 @@
 package lms.ir
 
-import lms.core.{Liftable, Type, Op}
+import lms.core.{Type, Op}
 import lms.codegen.ast.Program
 import lms.util.Counter
 
@@ -21,7 +21,6 @@ abstract class Builder {
   def fun(name: Name, top: Boolean, args: Seq[(Name, Type)], outty: Type):
     FunctionStub
 
-  def lift[A: Liftable](x: A): Exp
   def reflect(op: Op, children: Seq[Exp]): Exp
 
   def region(f: => Exp): Exp

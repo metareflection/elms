@@ -1,6 +1,7 @@
 package lms.core
 
 import scala.Conversion
+import annotation.implicitNotFound
 
 import lms.ir.Name
 
@@ -8,7 +9,12 @@ trait Base {
   type Rep[+T]
   protected type Exp
 
-  def unit[A: Liftable](x: A): Rep[A]
+  @implicitNotFound("${A} cannot be lifted")
+  abstract class Liftable[A: Typable] {
+    def lift(x: A): Rep[A]
+  }
+
+  def unit[A: Liftable](x: A): Rep[A] = summon[Liftable[A]].lift(x)
 
   def fun[A: Typable, B: Typable](name: Option[Name])(
       f: Rep[A] => Rep[B]

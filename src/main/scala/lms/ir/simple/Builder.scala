@@ -2,7 +2,7 @@ package lms.ir.simple
 
 // A bog-standard builder producing an IR in ANF form according to Rompf '16.
 
-import lms.core.{Liftable, Type, Op}, Op._
+import lms.core.{Type, Op}, Op._
 import lms.ir
 import lms.ir.Name
 import lms.runtime.Log
@@ -43,8 +43,6 @@ class Builder extends ir.Builder {
       variable(name), fill
     )
   }
-
-  def lift[A: Liftable](x: A): Exp = ast.E(Const(x), Nil)
 
   def reflect(op: Op, children: Seq[Exp]): Exp = {
     val name = fresh()

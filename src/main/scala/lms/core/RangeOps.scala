@@ -3,7 +3,7 @@ package lms.core
 import lms.core.Op
 import lms.ir.Name
 
-trait RangeOps extends Base {
+trait RangeOps extends PrimitiveOps {
   extension (st: Rep[Int])
     def until(end: Rep[Int]): Rep[Range] = unsafeReflect(Op.Range, st, end)
 

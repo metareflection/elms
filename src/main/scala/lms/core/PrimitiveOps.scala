@@ -6,6 +6,8 @@ import annotation.implicitNotFound
 import lms.runtime.*
 import lms.core.Op._
 
+import Type.*
+
 trait PrimitiveOps extends Base {
   def __ifThenElse[T](c: Rep[Boolean], t: => Rep[T], e: => Rep[T]): Rep[T] =
     unsafeReflect(IfThenElse, c, region(t), region(e))
@@ -27,7 +29,7 @@ trait PrimitiveOps extends Base {
   extension [A](x: Rep[A])(using provider: RepLength[A])
     def length: Rep[Int] = provider.run(x)
 
-  trait RepApply1[F,Input,Output] {
+  trait RepApply1[F, Input, Output] {
     def run(f: Rep[F], x: Rep[Input]): Rep[Output]
   }
 
@@ -77,4 +79,14 @@ trait PrimitiveOps extends Base {
   extension [A1, A2, A3, B](f: Rep[(A1, A2, A3) => B])
     def apply(a1: Rep[A1], a2: Rep[A2], a3: Rep[A3]): Rep[B] =
       unsafeReflect(App, f, a1, a2, a3)
+
+  sealed abstract class Primitive[A: Typable] extends Liftable[A] {
+    def lift(x: A): Rep[A] = unsafeReflect(Const(x))
+  }
+
+  given Primitive[Unit] {}
+  given Primitive[Int] {}
+  given Primitive[Boolean] {}
+  given Primitive[Char] {}
+  given Primitive[String] {}
 }

@@ -44,7 +44,7 @@ class virtualize extends MacroAnnotation {
 
     def makeUnit(x: Term, thist: Term, unitf: Term): Term = {
       val unitt = TypeRepr.of[Unit]
-      val liftable = Inferred(Symbol.requiredClass("lms.core.Liftable").typeRef)
+      val liftable = TypeSelect(thist, "Liftable")
       val unitTyp = Applied(liftable, List(TypeTree.of[Unit]))
 
       val unitW = Implicits.search(unitTyp.tpe) match {
@@ -87,10 +87,7 @@ class virtualize extends MacroAnnotation {
       if unRep(inferredTyp).isDefined then return Block(body, v)
 
       val ttree = TypeTree.of(using inferredTyp.asType)
-      val tLiftable = Applied(
-        Inferred(Symbol.requiredClass("lms.core.Liftable").typeRef),
-        List(ttree)
-      )
+      val tLiftable = Applied(TypeSelect(thist, "Liftable"), List(TypeTree.of[Unit]))
 
       val tLiftableW = Implicits.search(tLiftable.tpe) match {
         case success: ImplicitSearchSuccess => success.tree
