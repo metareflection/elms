@@ -6,6 +6,9 @@ trait ArrayOps extends PrimitiveOps {
   def newArray[A: Typable](i: Rep[Int]): Rep[Array[A]] =
     unsafeReflect(ArrayNew(summon[Typable[A]].identity), i)
 
+  def initFrom[A: Typable](entries: Seq[A]): Rep[Array[A]] =
+    unsafeReflect(ArrayInit(entries))
+
   extension [A](arr: Rep[Array[A]])
     def get(i: Rep[Int]): Rep[A] = unsafeReflect(ArrayGet, arr, i)
     def set(i: Rep[Int], x: Rep[A]): Rep[Unit] = unsafeReflect(ArraySet, arr, i, x)
@@ -16,4 +19,7 @@ trait ArrayOps extends PrimitiveOps {
 
   given [A]: RepLength[Array[A]] with
     def run(arr: Rep[Array[A]]): Rep[Int] = unsafeReflect(ArrayLength, arr)
+
+  given [A: Typable]: Liftable[Array[A]] with
+    def lift(arr: Array[A]): Rep[Array[A]] = initFrom(arr.toSeq)
 }

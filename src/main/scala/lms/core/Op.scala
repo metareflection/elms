@@ -38,6 +38,7 @@ object Op {
   case object IfThenElse extends Control
 
   case class ArrayNew(val typ: Type) extends Effectful
+  case class ArrayInit[T: Typable](init: Seq[T]) extends Effectful
   case object ArrayGet extends Effectful
   case object ArraySet extends Effectful
   case object ArrayLength extends Pure

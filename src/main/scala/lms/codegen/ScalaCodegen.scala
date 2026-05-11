@@ -19,8 +19,6 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
   extension [A](c: Const[A])
     def render: String = c.v match {
       case s: String => s"\"$s\""
-      case arr: Array[_] =>
-        "Array(" + arr.map(v => s"$v").mkString(",") + ")"
       case x         => s"$x"
     }
 
@@ -154,6 +152,14 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
       case ArrayNew(ty) => {
         out.emit(s"new Array[${ty.render}]")
         out.emitArgTerms(children)
+      }
+      case ArrayInit(vals) => {
+        out.emit(s"Array(")
+        vals.zipWithIndex.foreach { case (v, i) =>
+          if i != 0 then out.emit(", ")
+          out.emit(Const(v).render)
+        }
+        out.emit(")")
       }
       case ArrayGet => children match {
           case Seq(arr, i) => {
