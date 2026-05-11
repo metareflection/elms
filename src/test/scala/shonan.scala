@@ -1,5 +1,7 @@
 package lms.test
 
+import scala.language.implicitConversions
+
 // An adaptation of the original LMS's Shonan tutorial. This solves the HMM
 // problem from the Shonan challenge.
 

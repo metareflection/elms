@@ -1,6 +1,7 @@
 package lms.ir.eqsat
 
 import scala.collection.mutable
+import scala.language.implicitConversions
 
 import lms.ir.Name
 import lms.core, core.Op

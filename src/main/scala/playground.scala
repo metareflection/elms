@@ -1,5 +1,7 @@
 package lms
 
+import scala.language.implicitConversions
+
 import lms.prelude.{_, given}
 import lms.core.Op.*
 import lms.ir.eqsat.*
