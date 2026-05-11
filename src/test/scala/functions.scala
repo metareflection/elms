@@ -4,6 +4,7 @@ import lms.prelude._
 import lms.helpers.DslOps
 
 // Tests to ensure that implicit resolution is set up correctly.
+// These should all typecheck and compile.
 trait RepFunTypecheckSuite extends DslOps {
   def void(f: Rep[() => Int]) = f()
   def unary(f: Rep[Int => Int]) = f(1)

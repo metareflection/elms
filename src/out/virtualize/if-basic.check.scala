@@ -1,9 +1,11 @@
 def snippet(x0: Boolean): Int = {
-  val x1 = if x0 then {
-    1
+  val x3 = if x0 then {
+    val x1 = 1
+    x1
   } else {
-    0
+    val x2 = 0
+    x2
   }
-  x1
+  x3
 }
 

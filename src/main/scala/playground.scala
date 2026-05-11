@@ -13,19 +13,15 @@ import lms.helpers.{SnippetDriver, DslOps}
 import Pattern.{Var => PVar, Node => PNode}
 
 @virtualize
-object Playground
-    extends SnippetDriver[Int, Int](irBuilder =
-      Builder(Builder.Config(Seq(), EGraph.Config()))
-    )
-    with DslOps {
+object Playground extends SnippetDriver[Int, Int] with DslOps {
+  override val codegen = lms.codegen.ScalaCodegen()
+  override val builder = Builder(Builder.Config(Seq(), EGraph.Config()))
 
   def fact: Rep[Int => Int] = fun { (x: Rep[Int]) =>
-    if x === 0 then unit(1) else x * fact(x-1)
+    if x === 0 then unit(1) else x * fact(x - 1)
   }
 
-  def snippet(v: Rep[Int]): Rep[Int] = {
-    fact(v)
-  }
+  def snippet(v: Rep[Int]): Rep[Int] = { fact(v) }
 }
 
 @main
