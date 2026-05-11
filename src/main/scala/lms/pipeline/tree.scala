@@ -1,4 +1,4 @@
-package lms.codegen.ast
+package lms.pipeline.tree
 
 import lms.pipeline.Name
 import lms.core.{Op, Type}

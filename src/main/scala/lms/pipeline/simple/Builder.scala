@@ -5,8 +5,8 @@ package lms.pipeline.simple
 import lms.core.{Type, Op}, Op._
 import lms.pipeline
 import lms.pipeline.Name
+import lms.pipeline.tree as ast
 import lms.runtime.Log
-import lms.codegen.ast, ast._
 import lms.util.{Plumbing, Counter}
 
 class Builder extends pipeline.Builder {
@@ -14,6 +14,8 @@ class Builder extends pipeline.Builder {
 
   var roots: List[(Name, ast.Function)] = Nil
   var stBlock: List[(Name, Exp)] = Nil
+
+  import ast._
 
   def variable(name: Name): Exp = V(name)
 

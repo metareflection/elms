@@ -4,8 +4,8 @@ import scala.collection.mutable
 import scala.language.implicitConversions
 
 import lms.pipeline.Name
+import lms.pipeline.tree as ast
 import lms.core, core.Op
-import lms.codegen.ast
 import lms.runtime.Log
 import lms.util.Plumbing.*
 

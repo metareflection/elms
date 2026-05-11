@@ -6,7 +6,7 @@ import lms.prelude.{_, given}
 import lms.core.Op.*
 import lms.pipeline.eqsat.*
 import lms.pipeline.simple
-import lms.codegen.ast.*
+import lms.pipeline.tree as ast
 
 import lms.helpers.{SnippetDriver, DslOps}
 

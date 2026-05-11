@@ -1,6 +1,6 @@
 package lms.codegen
 
-import lms.codegen.ast
+import lms.pipeline.tree as ast
 import lms.util.IndentedWriter
 
 abstract class Backend(cfg: Config) {

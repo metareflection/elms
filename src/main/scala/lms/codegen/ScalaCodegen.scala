@@ -1,12 +1,14 @@
 package lms.codegen
 
 import lms.core.{Op, Type}, Type._, Op._
-import lms.codegen.ast, ast._
+import lms.pipeline.tree as ast
 import lms.pipeline.Name
 import lms.util.IndentedWriter
 import lms.runtime.Log
 
 class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
+  import ast._
+
   def emit(prog: Program, out: java.io.PrintStream): Unit = {
     val w = makeIndentedWriter(out)
     prog.functions.foreach { (fname, fdef) => w.emitFunction(fname, fdef) }
