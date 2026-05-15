@@ -3,7 +3,8 @@ package lms.util
 import scala.quoted.*
 
 case class SourceContext(fileName: String, line: Int, column: Int) {
-  def render: String = s"$fileName:$line:$column"
+  def render(depth: Int): String =
+    s"${fileName.split("/").takeRight(depth).mkString("/")}:$line:$column"
 }
 
 object SourceContext {
