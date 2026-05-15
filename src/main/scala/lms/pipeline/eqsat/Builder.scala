@@ -82,7 +82,7 @@ private class FunctionBuilder(
   import Builder.Handle.*
 
   private val counter = Counter()
-  private val graph = EGraph(rules, config)
+  private val graph = EGraph(Ruleset(rules), config)
   private val env = Map.from(predefs.map { name => name -> graph.addNamedVar(name) })
   private val regions = RegionStack(fresh)
 

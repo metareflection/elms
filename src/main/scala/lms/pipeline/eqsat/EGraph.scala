@@ -12,7 +12,7 @@ import lms.util.Plumbing.*
 import Pattern.{Var => PVar, Node => PNode}
 
 class EGraph(
-    rules: Seq[Rule],
+    rules: Ruleset,
     cfg: EGraph.Config = EGraph.Config()
 ) {
   import EGraph.*
@@ -48,34 +48,21 @@ class EGraph(
 
   private def canonicalize(enode: ENode): ENode = enode match {
     case Node(op, children) => Node(op, children.map(find))
-    case Var(name)            => Var(name)
+    case Var(name)          => Var(name)
   }
 
   private def isCanonical(a: EClass): Boolean = uf(a.id) == a
-
-  private def applyRewrites(node: ENode): Set[EClass] = {
-    (for {
-      case rw: Rewrite <- rules
-      subst <- matchNode(rw.lhs, node)
-    } yield buildRHS(subst, rw.rhs)).toSet
-  }
 
   private def add(nodeIn: ENode): EClass = {
     val node = canonicalize(nodeIn)
     nodes.get(node) match {
       case Some(cls) => find(cls)
       case None      => {
-        val simpls = applyRewrites(node)
         val result = EClass(uf.length)
-        simpls.toSeq match {
-          case Nil => {
-            uf += result
-            nodes(node) = result
-            // ensureClass(result) += node
-            return result
-          }
-          case cls +: clss => clss.foldLeft(cls)(union)
-        }
+        uf += result
+        nodes(node) = result
+        // ensureClass(result) += node
+        return result
       }
     }
   }
@@ -83,6 +70,7 @@ class EGraph(
   def addNode(op: Op.Pure, children: Seq[EClass]): EClass = add(Node(op, children))
 
   def addNamedVar(name: Name): EClass = add(Var(name))
+  def addNamedVar(name: String): EClass = addNamedVar(Name.from(name))
 
   private def nodesInClass(cls: EClass): Set[ENode] =
     // classes(find(cls)).toSet
@@ -171,16 +159,18 @@ class EGraph(
     case PNode(op, subpats) => addNode(op, subpats.map(buildRHS(subst, _)))
   }
 
+  def allClasses: Set[EClass] = {
+    uf.toSeq.filter(isCanonical).toSet
+  }
+
   // returns true when saturated
-  def applyEquivalences(): Unit = {
-    val uf2 = uf.toSeq
+  def applyRules(): Unit = {
     val substs = for {
-      cls <- uf2 if isCanonical(cls)
-      case Equivalence(lhs, rhs) <- rules
+      cls <- allClasses.toSeq if isCanonical(cls)
+      case Expansion(lhs, rhs) <- rules.toSeq
       subst <- ematch(lhs, cls)
     } yield (cls, buildRHS(subst, rhs))
 
-    println("done")
     substs.foreach(union)
   }
 
@@ -190,8 +180,7 @@ class EGraph(
 
     while !saturated && iterations < cfg.maxIterations do {
       iterations += 1
-      //println(s"iterations: $iterations")
-      applyEquivalences()
+      applyRules()
       saturated = !dirty
     }
   }
@@ -208,6 +197,16 @@ class EGraph(
   def extract(cls: EClass): Option[ast.Term] = {
     rebuild()
     extractCls(cls)
+  }
+
+  def debugPrint() = {
+    val uf2 = uf.toSeq
+    for (cls <- allClasses) {
+      println(s"$cls: ")
+      for (node <- nodesInClass(cls)) {
+        println(s"  $node")
+      }
+    }
   }
 }
 
@@ -243,6 +242,7 @@ object EGraph {
   case class EClass(id: Int) derives CanEqual
   case class Config(
     maxIterations: CountOrInf = 100,
+    maxDepth: CountOrInf = 10,
     namePrefix: String = "x"
   )
 }
