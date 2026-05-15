@@ -8,6 +8,7 @@ import lms.pipeline.tree as ast
 import lms.core, core.Op
 import lms.runtime.Log
 import lms.util.Plumbing.*
+import lms.util.CountOrInf, CountOrInf.*
 
 import Pattern.{Var => PVar, Node => PNode}
 
@@ -141,7 +142,6 @@ class EGraph(
       subst: Subst
   ): Seq[Subst] = {
     Log.info(s"[depth: $depth] attempting to match $pat at $cls")
-    Log.info(s"[depth: $depth] subst: $subst")
 
     pat match {
       case PVar(name) => subst.get(name) match {
@@ -215,29 +215,6 @@ object EGraph {
     case Node(op: Op.Pure, children: Seq[EClass])
     case Var(name: Name)
   }
-
-  enum CountOrInf derives CanEqual {
-    case Count(x: Int)
-    case Infinity
-  }
-  export CountOrInf.*
-
-  given Conversion[Int, CountOrInf] with
-    def apply(x: Int): CountOrInf = Count(x)
-
-  extension (x: Int)
-    def <(rhs: CountOrInf): Boolean = rhs match {
-      case Count(y) => x < y
-      case Infinity => true
-    }
-
-  given Ordering[CountOrInf] with
-    def compare(lhs: CountOrInf, rhs: CountOrInf): Int = (lhs, rhs) match {
-      case (Infinity, Infinity) => 0
-      case (Infinity, Count(_)) => 1
-      case (Count(_), Infinity) => -1
-      case (Count(l), Count(r)) => l - r
-    }
 
   case class EClass(id: Int) derives CanEqual
   case class Config(
