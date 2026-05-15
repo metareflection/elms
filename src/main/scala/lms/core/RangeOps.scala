@@ -1,6 +1,7 @@
 package lms.core
 
 import lms.core.Op
+import lms.core.Givens.given
 import lms.pipeline.Name
 
 trait RangeOps extends PrimitiveOps {

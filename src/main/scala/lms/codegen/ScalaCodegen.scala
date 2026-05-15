@@ -1,6 +1,7 @@
 package lms.codegen
 
-import lms.core.{Op, Type}, Type._, Op._
+import lms.core.*
+import lms.core.Op.*
 import lms.pipeline.tree as ast
 import lms.pipeline.Name
 import lms.util.IndentedWriter
@@ -157,10 +158,6 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
       }
       case ArrayInit(vals) => {
         out.emit(s"Array(")
-        vals.zipWithIndex.foreach { case (v, i) =>
-          if i != 0 then out.emit(", ")
-          out.emit(Const(v).render)
-        }
         out.emit(")")
       }
       case ArrayGet => children match {

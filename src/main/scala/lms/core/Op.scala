@@ -11,7 +11,7 @@ object Op {
   sealed abstract class Effectful extends Op
   sealed abstract class Control extends Op
 
-  case class Const[T](val v: T) extends Pure
+  case class Const[T:Primitive](val v: T) extends Pure
 
   case object App extends Effectful
 

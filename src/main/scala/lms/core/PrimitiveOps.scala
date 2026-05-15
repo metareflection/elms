@@ -4,9 +4,8 @@ import scala.util.TupledFunction
 import annotation.implicitNotFound
 
 import lms.runtime.*
+import lms.core
 import lms.core.Op._
-
-import Type.*
 
 trait PrimitiveOps extends Base {
   def __ifThenElse[T](c: Rep[Boolean], t: => Rep[T], e: => Rep[T]): Rep[T] =
@@ -57,9 +56,6 @@ trait PrimitiveOps extends Base {
   // Worse, because these errors happen at macro expansion time, they're
   // unlikely to be a good developer UX. It's much simpler to ban the use of
   // `==` on `Rep`s entirely and mint a dedicated operator instead.
-  //
-  // All that said, it's certainly possible that someone better versed in
-  // how exactly TASTy macros interact with type inference could make this work.
   @implicitNotFound("`Rep`s should not be compared using `==`, use `===` instead.")
   sealed trait NoRepEquals[T]
 
@@ -80,13 +76,6 @@ trait PrimitiveOps extends Base {
     def apply(a1: Rep[A1], a2: Rep[A2], a3: Rep[A3]): Rep[B] =
       unsafeReflect(App, f, a1, a2, a3)
 
-  sealed abstract class Primitive[A: Typable] extends Liftable[A] {
+  given [A: Primitive](using Typable[A]): Liftable[A] with
     def lift(x: A): Rep[A] = unsafeReflect(Const(x))
-  }
-
-  given Primitive[Unit] {}
-  given Primitive[Int] {}
-  given Primitive[Boolean] {}
-  given Primitive[Char] {}
-  given Primitive[String] {}
 }
