@@ -12,10 +12,7 @@ import lms.util.CountOrInf, CountOrInf.*
 
 import Pattern.{Var => PVar, Node => PNode}
 
-class EGraph(
-    rules: Ruleset,
-    cfg: EGraph.Config = EGraph.Config()
-) {
+class EGraph(rules: Ruleset, cfg: EGraph.Config = EGraph.Config()) {
   import EGraph.*
   import ENode.*
 
@@ -159,9 +156,7 @@ class EGraph(
     case PNode(op, subpats) => addNode(op, subpats.map(buildRHS(subst, _)))
   }
 
-  def allClasses: Set[EClass] = {
-    uf.toSeq.filter(isCanonical).toSet
-  }
+  def allClasses: Set[EClass] = { uf.toSeq.filter(isCanonical).toSet }
 
   // returns true when saturated
   def applyRules(): Unit = {
@@ -186,7 +181,7 @@ class EGraph(
   }
 
   private def extractNode(node: ENode): Option[ast.Term] = node match {
-    case Var(name)            => Some(ast.V(name))
+    case Var(name)          => Some(ast.V(name))
     case Node(op, children) => children.map(extractCls).traverse.map(ast.E(op, _))
   }
 
@@ -203,9 +198,7 @@ class EGraph(
     val uf2 = uf.toSeq
     for (cls <- allClasses) {
       println(s"$cls: ")
-      for (node <- nodesInClass(cls)) {
-        println(s"  $node")
-      }
+      for (node <- nodesInClass(cls)) { println(s"  $node") }
     }
   }
 }
@@ -218,8 +211,8 @@ object EGraph {
 
   case class EClass(id: Int) derives CanEqual
   case class Config(
-    maxIterations: CountOrInf = 100,
-    maxDepth: CountOrInf = 10,
-    namePrefix: String = "x"
+      maxIterations: CountOrInf = 100,
+      maxDepth: CountOrInf = 10,
+      namePrefix: String = "x"
   )
 }
