@@ -3,9 +3,8 @@ package lms.pipeline.eqsat
 import scala.collection.mutable
 import scala.language.implicitConversions
 
-import lms.pipeline.Name
+import lms.core, core.Op, core.Name
 import lms.core.tree as ast
-import lms.core, core.Op
 import lms.runtime.Log
 import lms.util.Plumbing.*
 import lms.util.CountOrInf, CountOrInf.*

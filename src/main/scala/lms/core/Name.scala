@@ -1,4 +1,4 @@
-package lms.pipeline
+package lms.core
 
 sealed abstract class Name {
   def render(prefix: String): String
@@ -13,4 +13,5 @@ private case class Fresh(id: Int) extends Name {
 
 object Name {
   def from(s: String): Name = Named(s)
+  def from(i: Int): Name = Fresh(i)
 }

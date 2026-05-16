@@ -2,9 +2,9 @@ package lms.core
 
 import scala.collection.mutable
 
-import lms.core.Op
+import lms.core.{Op, Name}
 import lms.core.tree as ast
-import lms.pipeline, pipeline.Name
+import lms.pipeline
 import lms.util.ClosureCompare
 
 abstract class Driver extends Base with ClosureCompare {

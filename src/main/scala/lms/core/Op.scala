@@ -2,8 +2,6 @@
 
 package lms.core
 
-import lms.pipeline.Name
-
 sealed trait Op derives CanEqual
 
 object Op {

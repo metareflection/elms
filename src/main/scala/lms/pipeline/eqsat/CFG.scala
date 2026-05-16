@@ -1,7 +1,6 @@
 package lms.pipeline.eqsat
 
-import lms.core.{Op, Type}
-import lms.pipeline.Name
+import lms.core.{Op, Type, Name}
 
 import EGraph.EClass
 

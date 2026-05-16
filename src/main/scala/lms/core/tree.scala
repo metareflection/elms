@@ -1,7 +1,6 @@
 package lms.core.tree
 
-import lms.pipeline.Name
-import lms.core.{Op, Type}
+import lms.core.{Op, Type, Name}
 import lms.util.Plumbing.*
 
 sealed abstract class Term derives CanEqual

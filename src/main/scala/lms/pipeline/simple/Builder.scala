@@ -2,9 +2,8 @@ package lms.pipeline.simple
 
 // A bog-standard builder producing an IR in ANF form according to Rompf '16.
 
-import lms.core.{Type, Op}, Op._
+import lms.core.{Type, Op, Name}, Op._
 import lms.pipeline
-import lms.pipeline.Name
 import lms.core.tree as ast
 import lms.runtime.Log
 import lms.util.{Plumbing, Counter}

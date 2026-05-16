@@ -1,6 +1,6 @@
 package lms.pipeline
 
-import lms.core.{Type, Op}
+import lms.core.{Type, Op, Name}
 import lms.core.tree.Program
 import lms.util.Counter
 
@@ -14,8 +14,8 @@ abstract class Builder {
 
   private val counter = Counter()
 
-  def name(s: String): Name = Named(s)
-  def fresh(): Name = Fresh(counter.tick())
+  def name(s: String): Name = Name.from(s)
+  def fresh(): Name = Name.from(counter.tick())
   def variable(name: Name): Exp
 
   def fun(name: Name, top: Boolean, args: Seq[(Name, Type)], outty: Type):
