@@ -2,7 +2,7 @@ package lms.codegen
 
 import lms.core.*
 import lms.core.Op.*
-import lms.pipeline.tree as ast
+import lms.core.tree as ast
 import lms.pipeline.Name
 import lms.util.IndentedWriter
 import lms.runtime.Log

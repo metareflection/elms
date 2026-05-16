@@ -1,4 +1,4 @@
-package lms.pipeline.tree
+package lms.core.tree
 
 import lms.pipeline.Name
 import lms.core.{Op, Type}

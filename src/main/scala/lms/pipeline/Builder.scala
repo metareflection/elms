@@ -1,7 +1,7 @@
 package lms.pipeline
 
 import lms.core.{Type, Op}
-import lms.pipeline.tree.Program
+import lms.core.tree.Program
 import lms.util.Counter
 
 abstract class Builder {

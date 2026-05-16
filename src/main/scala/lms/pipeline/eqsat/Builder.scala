@@ -3,9 +3,9 @@ package lms.pipeline.eqsat
 import scala.collection.mutable
 
 import lms.core.{Type, Op}
+import lms.core.tree as ast
 import lms.pipeline
 import lms.pipeline.Name
-import lms.pipeline.tree as ast
 import lms.util.{Counter, SourceContext}
 import lms.util.Plumbing.*
 import lms.util.collection.*

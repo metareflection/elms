@@ -5,7 +5,7 @@ package lms.pipeline.simple
 import lms.core.{Type, Op}, Op._
 import lms.pipeline
 import lms.pipeline.Name
-import lms.pipeline.tree as ast
+import lms.core.tree as ast
 import lms.runtime.Log
 import lms.util.{Plumbing, Counter}
 

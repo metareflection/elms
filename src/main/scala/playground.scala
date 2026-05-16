@@ -4,9 +4,9 @@ import scala.language.implicitConversions
 
 import lms.prelude.{_, given}
 import lms.core.Op.*
+import lms.core.tree as ast
 import lms.pipeline.eqsat.*
 import lms.pipeline.simple
-import lms.pipeline.tree as ast
 import lms.runtime.Log
 
 import lms.helpers.{SnippetDriver, DslOps}

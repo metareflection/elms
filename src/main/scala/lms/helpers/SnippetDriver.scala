@@ -10,7 +10,7 @@ abstract class SnippetDriver[A: Typable, B: Typable] extends Driver {
 
   def snippet(x: Rep[A]): Rep[B]
 
-  def code(): String = {
+  def code: String = {
     fun[A, B]("snippet") { x => snippet(x) }
     codegen.render(extract())
   }

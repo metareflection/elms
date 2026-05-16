@@ -15,6 +15,8 @@ trait Base {
   }
 
   def unit[A: Liftable](x: A): Rep[A] = summon[Liftable[A]].lift(x)
+  given [A](using w: Liftable[A]): Conversion[A, Rep[A]] with
+    def apply(x: A): Rep[A] = unit(x)
 
   def fun[A: Typable, B: Typable](name: Option[Name])(
       f: Rep[A] => Rep[B]
@@ -28,9 +30,6 @@ trait Base {
     fun(Name.from(name))(f)
 
   def region[A](exp: => Rep[A]): Rep[A]
-
-  given [A](using w: Liftable[A]): Conversion[A, Rep[A]] with
-    def apply(x: A): Rep[A] = unit(x)
 
   def unsafeWrap[T](exp: Exp): Rep[T]
   def unsafeUnwrap[T](rep: Rep[T]): Exp
