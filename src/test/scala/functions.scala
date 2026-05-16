@@ -3,6 +3,7 @@ package lms.test
 import scala.language.implicitConversions
 
 import lms.prelude._
+import lms.prelude.given
 import lms.helpers.DslOps
 
 // Tests to ensure that implicit resolution is set up correctly.
