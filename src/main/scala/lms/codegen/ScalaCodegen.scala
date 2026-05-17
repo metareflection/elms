@@ -129,14 +129,14 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
       case Range      => out.emitBinop("until", children)
       case RangeStart => children match {
           case Seq(arg) => {
-            out.emitTerm(arg)
+            out.emitMaybeParenthesized(arg)
             out.emit(".start")
           }
           case _ => out.invalidTerm(s"BUG: RangeStart invalid children")
         }
       case RangeEnd => children match {
           case Seq(arg) => {
-            out.emitTerm(arg)
+            out.emitMaybeParenthesized(arg)
             out.emit(".end")
           }
           case _ => out.invalidTerm(s"BUG: RangeEnd invalid children")

@@ -7,12 +7,42 @@ import lms.core.Op.*
 import lms.core.tree as ast
 import lms.pipeline.eqsat.*
 import lms.pipeline.simple
+import lms.pipeline.Propagate
 import lms.runtime.Log
+import lms.util.Plumbing.*
 
 import lms.helpers.{SnippetDriver, DslOps}
 
 import Pattern.{Var => PVar, Node => PNode}
 
+@virtualize
+trait Dsl extends DslOps {
+  def fact: Rep[Int => Int] = fun { (x: Rep[Int]) =>
+    if x === 0 then unit(1) else x * fact(x - 1)
+  }
+}
+
+object Playground extends SnippetDriver[Int, Int] with Dsl {
+  override val builder = pipeline.simple.Builder()
+  override val codegen = lms.codegen.ScalaCodegen()
+
+  def snippet(v: Rep[Int]): Rep[Int] = { fact(v) }
+
+  override def extract() = {
+    val prog = super.extract()
+    ast.Program(
+      prog.functions.map(_.mapRight(_.map(Propagate.run))),
+      prog.staticData
+    )
+  }
+}
+
+@main
+def main() = {
+  println(Playground.code)
+}
+
+/*
 @main
 def main() = {
   lms.runtime.Log = lms.util.Logger.debug
@@ -47,14 +77,14 @@ def main() = {
       V("y"),
       E(Minus, Vector(V("x"), V("y")))
     ))
-  */
+ */
   /*
   val x = graph.addNamedVar("x")
   val y = graph.addNamedVar("y")
   val minusy = graph.addNode(Negate, Vector(y))
   val xminusy = graph.addNode(Plus, Vector(x, minusy))
   val result = graph.addNode(Plus, Vector(y, xminusy))
-  */
+ */
   val x = graph.addNamedVar("x")
   val y = graph.addNamedVar("y")
   //val minusx = graph.addNode(Negate, Vector(x))
@@ -67,3 +97,4 @@ def main() = {
 
   println(graph.extract(result))
 }
+ */

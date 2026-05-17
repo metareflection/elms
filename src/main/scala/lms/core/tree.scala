@@ -9,7 +9,9 @@ case class E(op: Op, children: Seq[Term]) extends Term
 case class V(name: Name) extends Term
 case class Let(x: Name, e1: Term, e2: Term) extends Term
 
-case class Function(args: Seq[(Name, Type)], outty: Type, body: Term) extends Term
+case class Function(args: Seq[(Name, Type)], outty: Type, body: Term) extends Term {
+  def map(f: Term => Term): Function = Function(args, outty, f(body))
+}
 
 case class Program(functions: Seq[(Name, Function)], staticData: Seq[(Name, StaticData)])
 
