@@ -1,21 +1,21 @@
+val x3 = Array[Int](1,1,1,1,1)
 def snippet(x0: Array[Int]): Array[Int] = {
   val x1 = 5
   val x2 = new Array[Int](x1)
-  val x3 = 5
-  val x4 = 0
-  val x5 = x4 until x3
-  val x7 = x5.start
-  val x8 = x5.end
-  val x18 = for (x6 <- x7 until x8) {
-    val x9 = 0
+  val x4 = 5
+  val x5 = 0
+  val x6 = x5 until x4
+  val x8 = x6.start
+  val x9 = x6.end
+  val x18 = for (x7 <- x8 until x9) {
     val x10 = 0
-    val x11 = x2(x10)
-    val x12 = Array(1, 1, 1, 1, 1)
-    val x13 = x12(x6)
-    val x14 = x0(x6)
+    val x11 = 0
+    val x12 = x2(x11)
+    val x13 = x3(x7)
+    val x14 = x0(x7)
     val x15 = x13 * x14
-    val x16 = x11 + x15
-    val x17 = x2(x9) = x16
+    val x16 = x12 + x15
+    val x17 = x2(x10) = x16
     x17
   }
   

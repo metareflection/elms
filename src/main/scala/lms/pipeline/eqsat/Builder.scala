@@ -311,11 +311,14 @@ class Builder(cfg: Builder.Config) extends pipeline.Builder {
     Region(name, cls, body)
   }
 
-  def extract(): ast.Program = ast.Program(functions.toSeq.filterMap {
-    case (name, F(func)) => Some((name, func))
-    case (_, Stub) => {
-      Log.warning(s"BUG: attempted to `extract` with function $name still stubbed")
-      None
+  def extract(): ast.Program = {
+    val funcs = functions.toSeq.filterMap {
+      case (name, F(func)) => Some((name, func))
+      case (_, Stub)       => {
+        Log.warning(s"BUG: attempted to `extract` with function $name still stubbed")
+        None
+      }
     }
-  })
+    ast.Program(funcs, staticData.toSeq)
+  }
 }

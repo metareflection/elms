@@ -1,6 +1,6 @@
 package lms.core.tree
 
-import lms.core.{Op, Type, Name}
+import lms.core.{Op, Type, Name, StaticData}
 import lms.util.Plumbing.*
 
 sealed abstract class Term derives CanEqual
@@ -11,7 +11,7 @@ case class Let(x: Name, e1: Term, e2: Term) extends Term
 
 case class Function(args: Seq[(Name, Type)], outty: Type, body: Term) extends Term
 
-case class Program(functions: Seq[(Name, Function)])
+case class Program(functions: Seq[(Name, Function)], staticData: Seq[(Name, StaticData)])
 
 object Term {
   def size(e: Term): Int = e match {

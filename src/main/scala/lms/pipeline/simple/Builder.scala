@@ -2,7 +2,7 @@ package lms.pipeline.simple
 
 // A bog-standard builder producing an IR in ANF form according to Rompf '16.
 
-import lms.core.{Type, Op, Name}, Op._
+import lms.core.{Type, Op, Name, StaticData}, Op._
 import lms.pipeline
 import lms.core.tree as ast
 import lms.runtime.Log
@@ -40,9 +40,7 @@ class Builder extends pipeline.Builder {
       if top then roots ::= (name, f) else stBlock ::= (name, f)
     }
 
-    FunctionStub(
-      variable(name), fill
-    )
+    FunctionStub(variable(name), fill)
   }
 
   def reflect(op: Op, children: Seq[Exp]): Exp = {
@@ -63,6 +61,6 @@ class Builder extends pipeline.Builder {
       Log.warning("BUG: attempted to `extract` with non-empty `stBlock`")
     }
 
-    ast.Program(roots)
+    ast.Program(roots, staticData.toSeq)
   }
 }

@@ -86,9 +86,10 @@ class ShonanTest extends SnapshotFunSuite {
           for (i <- (0 `until` n): Range) {
             val sparse = a0(i).count(_ != 0) < 3
             if (sparse) {
-              for (j <- (0 `until` n): Range) { v1(i) = v1(i) + a(i)(j) * v(j) }
+              for (j <- (0 `until` n): Range) { v1(i) = v1(i) + a0(i)(j) * v(j) }
             } else {
-              for (j <- (0 `until` n): Rep[Range]) { v1(i) = v1(i) + a(i)(j) * v(j) }
+              val ai = staticData(a0(i))
+              for (j <- (0 `until` n): Rep[Range]) { v1(i) = v1(i) + ai(j) * v(j) }
             }
           }
           v1
@@ -112,10 +113,6 @@ class ShonanTest extends SnapshotFunSuite {
       def snippet(v: Rep[Array[Int]]) = {
 
         def unrollIf(sparse: Boolean, r: Range) = new UnrollIf {
-          // Because the argument type of `f` here is always `Rep[Int]`, this
-          // won't properly inline the lookups to `a(i)`. This is solvable in
-          // theory, but that's some very fiddly engineering effort for some
-          // test code. Constant propagation on the IR should also work.
           def foreach(f: Rep[Int] => Rep[Unit]): Rep[Unit] = {
             if (sparse) for (j <- (r.start `until` r.end): Range) f(j)
             else for (j <- (r.start `until` r.end): Rep[Range]) f(j)
@@ -128,7 +125,8 @@ class ShonanTest extends SnapshotFunSuite {
 
           for (i <- (0 `until` n): Range) {
             val sparse = a0(i).count(_ != 0) < 3
-            for (j <- unrollIf(sparse, 0 `until` n)) { v1(i) = v1(i) + a(i)(j) * v(j) }
+            val ai = staticData(a0(i))
+            for (j <- unrollIf(sparse, 0 `until` n)) { v1(i) = v1(i) + ai(j) * v(j) }
           }
           v1
         }

@@ -1,6 +1,6 @@
 package lms.pipeline
 
-import lms.core.{Type, Op, Name}
+import lms.core.{Type, Op, Name, StaticData}
 import lms.core.tree.Program
 import lms.util.Counter
 
@@ -14,6 +14,8 @@ abstract class Builder {
 
   private val counter = Counter()
 
+  protected val staticData = scala.collection.mutable.Map[Name, StaticData]()
+
   def name(s: String): Name = Name.from(s)
   def fresh(): Name = Name.from(counter.tick())
   def variable(name: Name): Exp
@@ -24,6 +26,12 @@ abstract class Builder {
   def reflect(op: Op, children: Seq[Exp]): Exp
 
   def region(f: => Exp): Exp
+
+  def registerStaticData(data: StaticData): Exp = {
+    val name = fresh()
+    staticData(name) = data
+    variable(name)
+  }
 
   def extract(): Program
 }

@@ -48,6 +48,9 @@ abstract class Driver extends Base with ClosureCompare {
   override def region[A](exp: => Rep[A]): Rep[A] =
     unsafeWrap(builder.region { unsafeUnwrap(exp) })
 
+  override def staticData[A: AsStaticData](data: A): Rep[A] =
+    unsafeWrap(builder.registerStaticData(data.asStaticData))
+
   override def unsafeWrap[T](exp: Exp): Rep[T] = Rep(exp)
   override def unsafeUnwrap[T](rep: Rep[T]): Exp = rep.wrapped
   override def unsafeRegister(op: Op, children: Exp*): Exp = builder

@@ -29,6 +29,8 @@ trait Base {
 
   def region[A](exp: => Rep[A]): Rep[A]
 
+  def staticData[A: AsStaticData](data: A): Rep[A]
+
   def unsafeWrap[T](exp: Exp): Rep[T]
   def unsafeUnwrap[T](rep: Rep[T]): Exp
   def unsafeRegister(op: Op, children: Exp*): Exp

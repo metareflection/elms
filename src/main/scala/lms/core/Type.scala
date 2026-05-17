@@ -26,20 +26,8 @@ object Givens {
   given Primitive[Char] = CHAR
   given Primitive[String] = STRING
 
-  given Typable[Unit] with
-    val identity = UNIT
-
-  given Typable[Int] with
-    val identity = INT
-
-  given Typable[Boolean] with
-    val identity = BOOL
-
-  given Typable[Char] with
-    val identity = CHAR
-
-  given Typable[String] with
-    val identity = STRING
+  given [A](using prim: Primitive[A]): Typable[A] with
+    val identity = prim
 
   given [A](using inner: Typable[A]): Typable[Array[A]] with
     val identity = ARRAY(inner.identity)

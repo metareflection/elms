@@ -12,6 +12,7 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
 
   def emit(prog: Program, out: java.io.PrintStream): Unit = {
     val w = makeIndentedWriter(out)
+    prog.staticData.foreach { (name, data) => w.emitNamedStaticData(name, data) }
     prog.functions.foreach { (fname, fdef) => w.emitFunction(fname, fdef) }
   }
 
@@ -19,10 +20,13 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
     s"${name.render(cfg.varPrefix)}: ${ty.render}"
   }.mkString(",")
 
-  extension [A](c: Const[A])
-    def render: String = c.v match {
-      case s: String => s"\"$s\""
-      case x         => s"$x"
+  extension [A:Primitive](x: A)
+    def render: String = summon[Primitive[A]] match {
+      case UNIT => s"()"
+      case INT => s"$x"
+      case BOOL => s"$x"
+      case CHAR => s"'$x'"
+      case STRING => s"\"$x\""
     }
 
   extension (ty: Type)
@@ -83,7 +87,7 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
     }
 
     private def emitCompound(op: Op, children: Seq[Term]): Unit = op match {
-      case c: Const[_] => out.emit(c.render)
+      case c @ Const(x) => out.emit(x.render(using c.prim))
       case IfThenElse  => children match {
           case Seq(guard, tthen, telse) => {
             out.emit("if ")
@@ -211,4 +215,17 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
         emitArgTerms(args)
       }
     }
+
+    private def emitNamedStaticData(name: Name, data: StaticData): Unit = {
+      out.emitln(s"val ${name.render(cfg.varPrefix)} = ${renderStaticData(data)}")
+    }
+
+    private def renderStaticData(data: StaticData): String =
+      data match {
+        case s @ Scalar(x) => x.render(using s.prim)
+        case SArray(elemTy, elems) => {
+          val renderedElems = elems.map(renderStaticData).mkString(",")
+          s"Array[${elemTy.render}]($renderedElems)"
+        }
+      }
 }
