@@ -18,14 +18,15 @@ class EGraph(rules: Ruleset, cfg: EGraph.Config = EGraph.Config()) {
   val uf: mutable.ArrayBuffer[EClass] = new mutable.ArrayBuffer
   var dirty: Boolean = false
 
-  // Maintained lazily, updated on rebuild
   private val nodes: mutable.Map[ENode, EClass] = mutable.Map()
+  private val classes: mutable.Map[EClass, mutable.Set[ENode]] = mutable.Map()
 
   private def find(ec: EClass): EClass = {
     val parent = uf(ec.id)
     if parent.id == ec.id then ec
     else {
       val result = find(parent)
+      uf(ec.id) = result
       result
     }
   }
@@ -36,6 +37,8 @@ class EGraph(rules: Ruleset, cfg: EGraph.Config = EGraph.Config()) {
     if a == b then a
     else {
       dirty = true
+      classes(bi) ++= classes(ai)
+      classes(ai) = classes(bi)
       uf(a.id) = b
       b
     }
@@ -49,6 +52,18 @@ class EGraph(rules: Ruleset, cfg: EGraph.Config = EGraph.Config()) {
   }
 
   private def isCanonical(a: EClass): Boolean = uf(a.id) == a
+  private def isCanonical(node: ENode): Boolean =
+    node match {
+      case Node(op, children) => children.forall { isCanonical(_) }
+      case Var(name) => true
+    }
+
+  private def ensureClass(cls: EClass): mutable.Set[ENode] =
+    classes.get(cls).getOrElse {
+      val result = mutable.Set[ENode]()
+      classes(cls) = result
+      result
+    }
 
   private def add(nodeIn: ENode): EClass = {
     val node = canonicalize(nodeIn)
@@ -58,7 +73,7 @@ class EGraph(rules: Ruleset, cfg: EGraph.Config = EGraph.Config()) {
         val result = EClass(uf.length)
         uf += result
         nodes(node) = result
-        // ensureClass(result) += node
+        ensureClass(result) += node
         return result
       }
     }
@@ -70,10 +85,31 @@ class EGraph(rules: Ruleset, cfg: EGraph.Config = EGraph.Config()) {
   def addNamedVar(name: String): EClass = addNamedVar(Name.from(name))
 
   private def nodesInClass(cls: EClass): Set[ENode] =
-    // classes(find(cls)).toSet
-    nodes.toSeq.filterMap { case (node, ncls) =>
-      if equals(cls, ncls) then Some(node) else None
-    }.toSet
+    classes(find(cls)).toSet
+
+  private def repair(node: ENode, oldCls: EClass): Unit = {
+    val cls = find(oldCls)
+    val canon = canonicalize(node)
+
+    nodes.get(canon) match {
+      case Some(other) => if !equals(cls, other) then union(cls, other)
+      case None => {
+        nodes(canon) = cls
+        classes(cls) += canon
+      }
+    }
+  }
+
+  // Remove nodes that are non-canonical
+  def gc(): Unit = {
+    val allNodes = nodes.toSeq
+    for (node, cls) <- allNodes do {
+      if !isCanonical(node) then {
+        nodes.remove(node)
+        classes(cls).remove(node)
+      }
+    }
+  }
 
   def rebuild(): Unit = {
     if !dirty then {
@@ -86,11 +122,10 @@ class EGraph(rules: Ruleset, cfg: EGraph.Config = EGraph.Config()) {
 
     while dirty do {
       dirty = false
-      oldNodes.foreach { case (node, cls) =>
-        val newCls = add(node)
-        union(cls, newCls)
-      }
+      oldNodes.foreach(repair)
     }
+
+    gc()
 
     Log.info("rebuilt!")
   }
@@ -98,7 +133,6 @@ class EGraph(rules: Ruleset, cfg: EGraph.Config = EGraph.Config()) {
   private type Subst = Map[String, EClass]
 
   def ematch(pat: Pattern, cls: EClass): Seq[Subst] = {
-    rebuild()
     ematchImpl(0, pat, find(cls), Map())
   }
 
@@ -137,7 +171,7 @@ class EGraph(rules: Ruleset, cfg: EGraph.Config = EGraph.Config()) {
       cls: EClass,
       subst: Subst
   ): Seq[Subst] = {
-    Log.info(s"[depth: $depth] attempting to match $pat at $cls")
+    //Log.debug(s"[depth: $depth] attempting to match $pat at $cls")
 
     pat match {
       case PVar(name) => subst.get(name) match {
@@ -158,7 +192,7 @@ class EGraph(rules: Ruleset, cfg: EGraph.Config = EGraph.Config()) {
   def allClasses: Set[EClass] = { uf.toSeq.filter(isCanonical).toSet }
 
   // returns true when saturated
-  def applyRules(): Unit = {
+  def applyRules(): Boolean = {
     val substs = for {
       cls <- allClasses.toSeq if isCanonical(cls)
       case Expansion(lhs, rhs) <- rules.toSeq
@@ -166,6 +200,7 @@ class EGraph(rules: Ruleset, cfg: EGraph.Config = EGraph.Config()) {
     } yield (cls, buildRHS(subst, rhs))
 
     substs.foreach(union)
+    return !dirty
   }
 
   def saturate(): Unit = {
@@ -173,31 +208,93 @@ class EGraph(rules: Ruleset, cfg: EGraph.Config = EGraph.Config()) {
     var iterations = 0
 
     while !saturated && iterations < cfg.maxIterations do {
+      Log.info(s"iteration: $iterations")
       iterations += 1
-      applyRules()
-      saturated = !dirty
+      saturated = applyRules()
+      rebuild()
     }
   }
 
-  private def extractNode(node: ENode): Option[ast.Term] = node match {
-    case Var(name)          => Some(ast.V(name))
-    case Node(op, children) => children.map(extractCls).traverse.map(ast.E(op, _))
+  private case class Best(term: ast.Term, cost: Int)
+
+  private def reachable(root: EClass): Set[EClass] = {
+    val seen = mutable.Set.empty[EClass]
+
+    def visit(cls: EClass): Unit = if seen.add(cls) then
+      for node <- nodesInClass(cls) do
+        node match {
+          case Node(_, children) => children.foreach(visit)
+          case _                 => ()
+        }
+
+    visit(root)
+    seen.toSet
   }
 
-  private def extractCls(cls: EClass): Option[ast.Term] = {
-    nodesInClass(cls).toSeq.filterMap(extractNode).argmin(ast.Term.size)
+  private def candidate(
+      node: ENode,
+      best: mutable.Map[EClass, Best]
+  ): Option[ast.Term] = node match {
+    case Var(name)          => Some(ast.V(name))
+    case Node(op, children) => {
+      val childTerms = children.map(cls => best.get(cls).map(_.term)).toSeq
+
+      if childTerms.forall(_.isDefined) then Some(ast.E(op, childTerms.flatten))
+      else None
+    }
+  }
+
+  // CR-someday cwong:
+  // This can actually pessimize some shared structure. If we have something
+  // like
+  //
+  //   let x = e in x + x
+  //
+  // then this could be extracted as `e + e`, which ~doubles the size of the
+  // expression tree (`e` occurs once in the input but twice in the extracted
+  // form). To resolve this, we could instead produce let-nodes, which would
+  // give output that looks closer to ANF. However, to do so properly, we'd
+  // either need the ability to generate fresh names or return an intermediate
+  // form that can be filled in with fresh names later.
+  private def runExtract(root: EClass): Option[ast.Term] = {
+    val classes = reachable(root)
+    val best = mutable.Map.empty[EClass, Best]
+
+    var changed = true
+
+    while changed do {
+      changed = false
+      for cls <- classes do {
+        nodesInClass(cls).iterator.flatMap(node => candidate(node, best).iterator)
+          .map(term => Best(term, ast.Term.size(term))).minByOption(_.cost).foreach {
+            b =>
+              best.get(cls) match {
+                case None => {
+                  best(cls) = b
+                  changed = true
+                }
+                case Some(old) => if b.cost < old.cost then {
+                    best(cls) = b
+                    changed = true
+                  }
+              }
+          }
+      }
+    }
+
+    best.get(root).map(_.term)
   }
 
   def extract(cls: EClass): Option[ast.Term] = {
     rebuild()
-    extractCls(cls)
+    runExtract(cls)
   }
 
-  def debugPrint() = {
+  def debugDump() = {
     val uf2 = uf.toSeq
     for (cls <- allClasses) {
-      println(s"$cls: ")
-      for (node <- nodesInClass(cls)) { println(s"  $node") }
+      Log.debug(s"$cls: ")
+      for (node <- nodesInClass(cls)) { Log.debug(s"  $node") }
     }
   }
 }
@@ -210,7 +307,7 @@ object EGraph {
 
   case class EClass(id: Int) derives CanEqual
   case class Config(
-      maxIterations: CountOrInf = 100,
+      maxIterations: CountOrInf = 9,
       maxDepth: CountOrInf = 10,
       namePrefix: String = "x"
   )
