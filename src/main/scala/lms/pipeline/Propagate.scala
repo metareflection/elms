@@ -33,8 +33,16 @@ object Propagate {
       e match {
         case View.Negate(View.Const[Int](x))                    => View.mkConst(-x)
         case View.Plus(View.Const[Int](x), View.Const[Int](y))  => View.mkConst(x + y)
+        case View.Plus(t, View.Const[Int](0))  => t
+        case View.Plus(View.Const[Int](0), t)  => t
         case View.Minus(View.Const[Int](x), View.Const[Int](y)) => View.mkConst(x - y)
+        case View.Minus(t, View.Const[Int](0)) => t
+        case View.Minus(View.Const[Int](0), t) => View.Negate(t)
         case View.Times(View.Const[Int](x), View.Const[Int](y)) => View.mkConst(x * y)
+        case View.Times(t, View.Const[Int](1)) => t
+        case View.Times(View.Const[Int](1), t) => t
+        case View.Times(t, View.Const[Int](0)) => View.mkConst(0)
+        case View.Times(View.Const[Int](0), t) => View.mkConst(0)
         case View.Equals(View.Const[Unit](x), View.Const[Unit](y)) => View
             .mkConst(x == y)
         case View.Equals(View.Const[Int](x), View.Const[Int](y)) => View.mkConst(x == y)
@@ -50,8 +58,16 @@ object Propagate {
         case View.Ge(View.Const[Int](x), View.Const[Int](y)) => View.mkConst(x >= y)
         case View.And(View.Const[Boolean](x), View.Const[Boolean](y)) => View
             .mkConst(x && y)
+        case View.And(View.Const[Boolean](false), t) => View.mkConst(false)
+        case View.And(t, View.Const[Boolean](false)) => View.mkConst(false)
+        case View.And(View.Const[Boolean](true), t) => t
+        case View.And(t, View.Const[Boolean](true)) => t
         case View.Or(View.Const[Boolean](x), View.Const[Boolean](y)) => View
             .mkConst(x || y)
+        case View.Or(View.Const[Boolean](true), t) => View.mkConst(true)
+        case View.Or(t, View.Const[Boolean](true)) => View.mkConst(true)
+        case View.Or(View.Const[Boolean](false), t) => t
+        case View.Or(t, View.Const[Boolean](false)) => t
         case View.IfThenElse(View.Const[Boolean](b), thent, elset) =>
           if b then thent else elset
         case _ => e
