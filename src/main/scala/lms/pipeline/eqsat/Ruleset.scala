@@ -7,7 +7,7 @@ enum Pattern {
   case Node(op: Op.Pure, children: Vector[Pattern])
 }
 
-case class Expansion(lhs: Pattern, rhs: Pattern)
+case class Expansion(lhs: Pattern, rhs: Pattern) derives CanEqual
 
 abstract class Rule private (
     val lhs: Pattern,

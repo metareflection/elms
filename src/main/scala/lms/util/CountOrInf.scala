@@ -1,5 +1,7 @@
 package lms.util
 
+import scala.language.implicitConversions
+
 enum CountOrInf derives CanEqual {
   case Count(x: Int)
   case Infinity
@@ -10,12 +12,12 @@ object CountOrInf {
     def apply(x: Int): CountOrInf = Count(x)
 
   extension (x: Int)
-    def <(rhs: CountOrInf): Boolean = rhs match {
-      case Count(y) => x < y
-      case Infinity => true
-    }
+    def <(rhs: CountOrInf): Boolean = order.compare(x, rhs) < 0
+    def <=(rhs: CountOrInf): Boolean = order.compare(x, rhs) <= 0
+    def >(rhs: CountOrInf): Boolean = order.compare(x, rhs) > 0
+    def >=(rhs: CountOrInf): Boolean = order.compare(x, rhs) >= 0
 
-  given Ordering[CountOrInf] with
+  given order: Ordering[CountOrInf] with
     def compare(lhs: CountOrInf, rhs: CountOrInf): Int = (lhs, rhs) match {
       case (Infinity, Infinity) => 0
       case (Infinity, Count(_)) => 1

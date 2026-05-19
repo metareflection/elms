@@ -11,7 +11,11 @@ import lms.util.CountOrInf, CountOrInf.*
 
 import Pattern.{Var => PVar, Node => PNode}
 
-class EGraph(rules: Ruleset, cfg: EGraph.Config = EGraph.Config()) {
+class EGraph(
+    val rules: Ruleset,
+    val cfg: EGraph.Config = EGraph.Config(),
+    val scheduler: Scheduler = new BackoffScheduler
+) {
   import EGraph.*
   import ENode.*
 
@@ -37,8 +41,7 @@ class EGraph(rules: Ruleset, cfg: EGraph.Config = EGraph.Config()) {
     if a == b then a
     else {
       dirty = true
-      classes(bi) ++= classes(ai)
-      classes(ai) = classes(bi)
+      classes(b) ++= classes(a)
       uf(a.id) = b
       b
     }
@@ -52,14 +55,13 @@ class EGraph(rules: Ruleset, cfg: EGraph.Config = EGraph.Config()) {
   }
 
   private def isCanonical(a: EClass): Boolean = uf(a.id) == a
-  private def isCanonical(node: ENode): Boolean =
-    node match {
-      case Node(op, children) => children.forall { isCanonical(_) }
-      case Var(name) => true
-    }
+  private def isCanonical(node: ENode): Boolean = node match {
+    case Node(op, children) => children.forall { isCanonical(_) }
+    case Var(name)          => true
+  }
 
-  private def ensureClass(cls: EClass): mutable.Set[ENode] =
-    classes.get(cls).getOrElse {
+  private def ensureClass(cls: EClass): mutable.Set[ENode] = classes.get(cls)
+    .getOrElse {
       val result = mutable.Set[ENode]()
       classes(cls) = result
       result
@@ -84,8 +86,7 @@ class EGraph(rules: Ruleset, cfg: EGraph.Config = EGraph.Config()) {
   def addNamedVar(name: Name): EClass = add(Var(name))
   def addNamedVar(name: String): EClass = addNamedVar(Name.from(name))
 
-  private def nodesInClass(cls: EClass): Set[ENode] =
-    classes(find(cls)).toSet
+  private def nodesInClass(cls: EClass): Set[ENode] = classes(find(cls)).toSet
 
   private def repair(node: ENode, oldCls: EClass): Unit = {
     val cls = find(oldCls)
@@ -93,7 +94,7 @@ class EGraph(rules: Ruleset, cfg: EGraph.Config = EGraph.Config()) {
 
     nodes.get(canon) match {
       case Some(other) => if !equals(cls, other) then union(cls, other)
-      case None => {
+      case None        => {
         nodes(canon) = cls
         classes(cls) += canon
       }
@@ -101,12 +102,29 @@ class EGraph(rules: Ruleset, cfg: EGraph.Config = EGraph.Config()) {
   }
 
   // Remove nodes that are non-canonical
-  def gc(): Unit = {
+  def compact(): Unit = {
     val allNodes = nodes.toSeq
+
+    // remove non-canonical nodes
     for (node, cls) <- allNodes do {
       if !isCanonical(node) then {
         nodes.remove(node)
-        classes(cls).remove(node)
+        classes.get(cls).map(_.remove(node))
+      }
+    }
+
+    for ((cls, clsNodes) <- classes) do {
+      // remove non-canonical classes
+      if clsNodes.isEmpty || !isCanonical(cls) then classes.remove(cls)
+
+      // if there is a singleton node in this class, then
+      clsNodes.find(_.isSingleton).map { node =>
+        for (other <- clsNodes.toSeq) {
+          if node != other then {
+            clsNodes.remove(other)
+            nodes.remove(other)
+          }
+        }
       }
     }
   }
@@ -125,7 +143,7 @@ class EGraph(rules: Ruleset, cfg: EGraph.Config = EGraph.Config()) {
       oldNodes.foreach(repair)
     }
 
-    gc()
+    compact()
 
     Log.info("rebuilt!")
   }
@@ -171,7 +189,7 @@ class EGraph(rules: Ruleset, cfg: EGraph.Config = EGraph.Config()) {
       cls: EClass,
       subst: Subst
   ): Seq[Subst] = {
-    //Log.debug(s"[depth: $depth] attempting to match $pat at $cls")
+    // Log.debug(s"[depth: $depth] attempting to match $pat at $cls")
 
     pat match {
       case PVar(name) => subst.get(name) match {
@@ -189,29 +207,60 @@ class EGraph(rules: Ruleset, cfg: EGraph.Config = EGraph.Config()) {
     case PNode(op, subpats) => addNode(op, subpats.map(buildRHS(subst, _)))
   }
 
-  def allClasses: Set[EClass] = { uf.toSeq.filter(isCanonical).toSet }
+  def allClasses: Set[EClass] = { classes.keySet.filter(isCanonical(_)).toSet }
 
-  // returns true when saturated
-  def applyRules(): Boolean = {
-    val substs = for {
-      cls <- allClasses.toSeq if isCanonical(cls)
-      case Expansion(lhs, rhs) <- rules.toSeq
-      subst <- ematch(lhs, cls)
-    } yield (cls, buildRHS(subst, rhs))
+  def applyRules(iteration: Int, forceAll: Boolean): Boolean = {
+    val results = new mutable.ArrayBuffer[(EClass, EClass)]
 
-    substs.foreach(union)
+    if forceAll then Log.info("forcing all rules")
+
+    for (case rule @ Expansion(lhs, rhs) <- rules.toSeq) {
+      if scheduler.shouldRun(rule, iteration) || forceAll then {
+        var matches = 0
+        var unions = 0
+        val oldNodeCount = nodes.size
+
+        for (cls <- allClasses) {
+          val substs = ematch(lhs, cls)
+          matches += substs.size
+
+          for (subst <- substs) {
+            val result = buildRHS(subst, rhs)
+            results.append((cls, result))
+          }
+        }
+
+        val newNodeCount = nodes.size - oldNodeCount
+
+        scheduler.recordResult(rule, iteration, matches, newNodeCount, unions)
+      }
+    }
+
+    results.foreach(union)
+
     return !dirty
   }
 
   def saturate(): Unit = {
-    var saturated = false
+    var done = false
     var iterations = 0
+    var forceAll = false
 
-    while !saturated && iterations < cfg.maxIterations do {
+    while !done && iterations < cfg.maxIterations do {
       Log.info(s"iteration: $iterations")
+      val maybeSaturated = applyRules(iterations, forceAll)
       iterations += 1
-      saturated = applyRules()
       rebuild()
+
+      if maybeSaturated then { if forceAll then done = true else forceAll = true }
+      else { forceAll = false }
+
+      if nodes.size >= cfg.nodeCap then {
+        Log.warning(
+          "size of equality graph exceeded during saturation, terminating early"
+        )
+        done = true
+      }
     }
   }
 
@@ -300,15 +349,24 @@ class EGraph(rules: Ruleset, cfg: EGraph.Config = EGraph.Config()) {
 }
 
 object EGraph {
-  private enum ENode derives CanEqual {
-    case Node(op: Op.Pure, children: Seq[EClass])
-    case Var(name: Name)
+  private trait ENode derives CanEqual {
+    def isSingleton: Boolean
+  }
+
+  private object ENode {
+    case class Node(op: Op.Pure, children: Seq[EClass]) extends ENode {
+      def isSingleton = children.isEmpty
+    }
+
+    case class Var(name: Name) extends ENode {
+      def isSingleton = true
+    }
   }
 
   case class EClass(id: Int) derives CanEqual
   case class Config(
-      maxIterations: CountOrInf = 9,
-      maxDepth: CountOrInf = 10,
+      maxIterations: CountOrInf = 100,
+      nodeCap: CountOrInf = 10000,
       namePrefix: String = "x"
   )
 }
