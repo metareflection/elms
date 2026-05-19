@@ -4,6 +4,7 @@ import lms.core.*
 import lms.core.Op.*
 import lms.core.Name
 import lms.core.tree as ast
+import lms.core.tree.View
 import lms.util.IndentedWriter
 import lms.runtime.Log
 
@@ -20,12 +21,12 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
     s"${name.render(cfg.varPrefix)}: ${ty.render}"
   }.mkString(",")
 
-  extension [A:Primitive](x: A)
+  extension [A: Primitive](x: A)
     def render: String = summon[Primitive[A]] match {
-      case UNIT => s"()"
-      case INT => s"$x"
-      case BOOL => s"$x"
-      case CHAR => s"'$x'"
+      case UNIT   => s"()"
+      case INT    => s"$x"
+      case BOOL   => s"$x"
+      case CHAR   => s"'$x'"
       case STRING => s"\"$x\""
     }
 
@@ -62,8 +63,13 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
       out.emitln("}\n")
     }
 
-    private def emitTerm(t: Term): Unit = t match {
-      case E(op, children) => out.emitCompound(op, children)
+    private def emitMaybeParenthesized(t: Term): Unit = {
+      if t.isCompound then out.emit("(")
+      out.emitTerm(t)
+      if t.isCompound then out.emit(")")
+    }
+
+    private def emitTerm(term: Term): Unit = term match {
       case V(name)         => out.emit(name.render(cfg.varPrefix))
       case Let(x, e1, e2)  => {
         out.emit(s"val ${x.render(cfg.varPrefix)} = ")
@@ -78,118 +84,78 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
         out.indented { out.emitTerm(body) }
         out.emitln("}")
       }
-    }
-
-    private def emitMaybeParenthesized(t: Term): Unit = {
-      if t.isCompound then out.emit("(")
-      out.emitTerm(t)
-      if t.isCompound then out.emit(")")
-    }
-
-    private def emitCompound(op: Op, children: Seq[Term]): Unit = op match {
-      case c @ Const(x) => out.emit(x.render(using c.prim))
-      case IfThenElse  => children match {
-          case Seq(guard, tthen, telse) => {
-            out.emit("if ")
-            out.emitMaybeParenthesized(guard)
-            out.emitln(" then {")
-            out.indented { out.emitTerm(tthen) }
-            out.emitln("")
-            out.emitln("} else {")
-            out.indented { out.emitTerm(telse) }
-            out.emitln("")
-            out.emit("}")
-          }
-          case _ => out.invalidTerm("BUG: IfThenElse should have exactly 3 children")
-        }
-      case App => children match {
-          case f +: args => {
-            out.emitMaybeParenthesized(f)
-            out.emitArgTerms(args)
-          }
-          case _ => out.invalidTerm("BUG: function application with no children")
-        }
-      case Negate => children match {
-        case Seq(t) => {
-          out.emit("-")
-          out.emitMaybeParenthesized(t)
-        }
-        case _ => out.invalidTerm("BUG: negate invalid children")
+      case View.Const(const) => out.emit(const.value.render(using const.prim))
+      case View.IfThenElse(guard, tthen, telse) => {
+        out.emit("if ")
+        out.emitMaybeParenthesized(guard)
+        out.emitln(" then {")
+        out.indented { out.emitTerm(tthen) }
+        out.emitln("")
+        out.emitln("} else {")
+        out.indented { out.emitTerm(telse) }
+        out.emitln("")
+        out.emit("}")
       }
-      case Plus       => out.emitBinop("+", children)
-      case Times      => out.emitBinop("*", children)
-      case Minus      => out.emitBinop("-", children)
-      case Equals     => out.emitBinop("==", children)
-      case Lt         => out.emitBinop("<", children)
-      case Gt         => out.emitBinop(">", children)
-      case Le         => out.emitBinop("<=", children)
-      case Ge         => out.emitBinop(">=", children)
-      case And        => out.emitBinop("&&", children)
-      case Or         => out.emitBinop("||", children)
-      case Range      => out.emitBinop("until", children)
-      case RangeStart => children match {
-          case Seq(arg) => {
-            out.emitMaybeParenthesized(arg)
-            out.emit(".start")
-          }
-          case _ => out.invalidTerm(s"BUG: RangeStart invalid children")
-        }
-      case RangeEnd => children match {
-          case Seq(arg) => {
-            out.emitMaybeParenthesized(arg)
-            out.emit(".end")
-          }
-          case _ => out.invalidTerm(s"BUG: RangeEnd invalid children")
-        }
-      case RangeForEach(name) => children match {
-          case Seq(st, end, body) => {
-            out.emit(s"for (${name.render(cfg.varPrefix)} <- ")
-            out.emitMaybeParenthesized(st)
-            out.emit(" until ")
-            out.emitMaybeParenthesized(end)
-            out.emitln(") {")
-            out.indented { out.emitTerm(body) }
-            out.emitln("")
-            out.emitln("}")
-          }
-          case Seq(_, _, _, _) => out
-              .invalidTerm("BUG: RangeForEach first child should be a Var")
-          case _ => out.invalidTerm("BUG: RangeForEach invalid children")
-        }
-      case ArrayNew(ty) => {
-        out.emit(s"new Array[${ty.render}]")
-        out.emitArgTerms(children)
+      case View.App(f, args) => {
+        out.emitMaybeParenthesized(f)
+        out.emitArgTerms(args)
       }
-      case ArrayInit(vals) => {
-        out.emit(s"Array(")
+      case View.Negate(t) => {
+        out.emit("-")
+        out.emitMaybeParenthesized(t)
+      }
+      case View.Plus(x, y)    => out.emitBinop("+", x, y)
+      case View.Times(x, y)   => out.emitBinop("*", x, y)
+      case View.Minus(x, y)   => out.emitBinop("-", x, y)
+      case View.Equals(x, y)  => out.emitBinop("==", x, y)
+      case View.Lt(x, y)      => out.emitBinop("<", x, y)
+      case View.Gt(x, y)      => out.emitBinop(">", x, y)
+      case View.Le(x, y)      => out.emitBinop("<=", x, y)
+      case View.Ge(x, y)      => out.emitBinop(">=", x, y)
+      case View.And(x, y)     => out.emitBinop("&&", x, y)
+      case View.Or(x, y)      => out.emitBinop("||", x, y)
+      case View.Range(x, y)   => out.emitBinop("until", x, y)
+      case View.RangeStart(t) => {
+        out.emitMaybeParenthesized(t)
+        out.emit(".start")
+      }
+      case View.RangeEnd(t) => {
+        out.emitMaybeParenthesized(t)
+        out.emit(".end")
+      }
+      case View.RangeForEach(name, st, end, body) => {
+        out.emit(s"for (${name.render(cfg.varPrefix)} <- ")
+        out.emitMaybeParenthesized(st)
+        out.emit(" until ")
+        out.emitMaybeParenthesized(end)
+        out.emitln(") {")
+        out.indented { out.emitTerm(body) }
+        out.emitln("")
+        out.emitln("}")
+      }
+      case View.ArrayNew(ty, t) => {
+        out.emit(s"new Array[${ty.render}](")
+        out.emitTerm(t)
         out.emit(")")
       }
-      case ArrayGet => children match {
-          case Seq(arr, i) => {
-            out.emitTerm(arr)
-            out.emit("(")
-            out.emitTerm(i)
-            out.emit(")")
-          }
-          case _ => out.invalidTerm("BUG: ArrayGet invalid children")
-        }
-      case ArraySet => children match {
-          case Seq(arr, i, x) => {
-            out.emitTerm(arr)
-            out.emit("(")
-            out.emitTerm(i)
-            out.emit(") = ")
-            out.emitTerm(x)
-          }
-          case _ => out.invalidTerm(s"BUG: ArraySet invalid children")
-        }
-      case ArrayLength => children match {
-          case Seq(arr) => {
-            out.emitTerm(arr)
-            out.emit(".length")
-          }
-          case _ => out.invalidTerm("BUG: ArrayLength invalid children")
-        }
+      case View.ArrayGet(arr, i) => {
+        out.emitTerm(arr)
+        out.emit("(")
+        out.emitTerm(i)
+        out.emit(")")
+      }
+      case View.ArraySet(arr, i, x) => {
+        out.emitTerm(arr)
+        out.emit("(")
+        out.emitTerm(i)
+        out.emit(") = ")
+        out.emitTerm(x)
+      }
+      case View.ArrayLength(arr) => {
+        out.emitTerm(arr)
+        out.emit(".length")
+      }
+      case E(_, _) => out.invalidTerm(s"Got invalid term: $term")
     }
 
     private def emitArgTerms(args: Seq[Term]): Unit = {
@@ -203,29 +169,21 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
       out.emit(")")
     }
 
-    private def emitBinop(sym: String, args: Seq[Term]): Unit = args match {
-      case Seq(x, y) => {
-        out.emitMaybeParenthesized(x)
-        out.emit(s" $sym ")
-        out.emitMaybeParenthesized(y)
-      }
-      case _ => {
-        Log.error(s"BUG: attempted to render binary op with len(args) != 2")
-        out.emit(sym)
-        emitArgTerms(args)
-      }
+    private def emitBinop(sym: String, x: Term, y: Term): Unit = {
+      out.emitMaybeParenthesized(x)
+      out.emit(s" $sym ")
+      out.emitMaybeParenthesized(y)
     }
 
     private def emitNamedStaticData(name: Name, data: StaticData): Unit = {
       out.emitln(s"val ${name.render(cfg.varPrefix)} = ${renderStaticData(data)}")
     }
 
-    private def renderStaticData(data: StaticData): String =
-      data match {
-        case s @ Scalar(x) => x.render(using s.prim)
-        case SArray(elemTy, elems) => {
-          val renderedElems = elems.map(renderStaticData).mkString(",")
-          s"Array[${elemTy.render}]($renderedElems)"
-        }
+    private def renderStaticData(data: StaticData): String = data match {
+      case s @ Scalar(x)         => x.render(using s.prim)
+      case SArray(elemTy, elems) => {
+        val renderedElems = elems.map(renderStaticData).mkString(",")
+        s"Array[${elemTy.render}]($renderedElems)"
       }
+    }
 }

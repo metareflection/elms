@@ -59,6 +59,29 @@ object View {
     }
   }
 
+  trait AnyConst {
+    type T
+    val prim: Primitive[T]
+    val value: T
+  }
+
+  object Const {
+    def pack[A](c: Op.Const[A])(using aprim: Primitive[A]): AnyConst =
+      new AnyConst {
+        type T = A
+        val prim = aprim
+        val value = c.v
+      }
+
+    def unapply(t: Term): Option[AnyConst] = t match {
+      case E(c @ Op.Const(_), s) => {
+        if s.length > 0 then warnTooMany("`Const`")
+        Some(pack(c)(using c.prim))
+      }
+      case _ => None
+    }
+  }
+
   def mkConst[T: Primitive](x: T): Term = E(Op.Const(x), Seq())
 
   object App {
@@ -136,7 +159,7 @@ object View {
           return None
         }
         if s.length > 3 then { warnTooMany("RangeForEach") }
-        Some((name, s(0), s(1), s(3)))
+        Some((name, s(0), s(1), s(2)))
       }
       case _ => None
     }
