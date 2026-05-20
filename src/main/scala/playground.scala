@@ -11,8 +11,6 @@ import elms.pipeline.Propagate
 import elms.runtime.Log
 import elms.util.Plumbing.*
 
-import elms.helpers.{OptimizingDriver, DslOps}
-
 import Pattern.{Var => PVar, Node => PNode}
 
 @virtualize
@@ -22,24 +20,17 @@ trait Dsl extends DslOps {
   }
 }
 
-object Playground extends OptimizingDriver[Int, Int](Seq()) with Dsl {
+object Playground extends OptimizingSnippetDriver[Int, Int](Seq()) with Dsl {
   override val codegen = elms.codegen.CCodegen()
 
   def snippet(v: Rep[Int]): Rep[Int] = { fact(v) }
-
-  override def extract() = {
-    val prog = super.extract()
-    ast.Program(
-      prog.functions.map(_.mapRight(_.map(Propagate.run))),
-      prog.staticData
-    )
-  }
 }
 
 @main
 def main() = {
   println(Playground.code)
 }
+
 
 /*
 @main

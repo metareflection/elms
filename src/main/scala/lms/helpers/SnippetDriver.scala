@@ -18,12 +18,12 @@ abstract class SnippetDriver[A: Typable, B: Typable] extends Driver {
   }
 }
 
-abstract class SimpleDriver[A: Typable, B: Typable] extends SnippetDriver[A, B] {
+abstract class SimpleSnippetDriver[A: Typable, B: Typable] extends SnippetDriver[A, B] {
   override val builder = pipeline.simple.Builder()
   override val codegen = ScalaCodegen()
 }
 
-abstract class OptimizingDriver[A: Typable, B: Typable](rules: Seq[Rule])
+abstract class OptimizingSnippetDriver[A: Typable, B: Typable](rules: Seq[Rule] = Seq())
     extends SnippetDriver[A, B] {
   override val builder = eqsat.Builder(eqsat.Builder.Config(rules))
   override val codegen = ScalaCodegen()

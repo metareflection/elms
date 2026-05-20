@@ -8,5 +8,5 @@ export elms.core.Base
 export elms.core.PrimitiveOps
 export elms.helpers.DslOps
 export elms.helpers.SnippetDriver
-export elms.helpers.SimpleDriver
-export elms.helpers.OptimizingDriver
+export elms.helpers.SimpleSnippetDriver
+export elms.helpers.OptimizingSnippetDriver
