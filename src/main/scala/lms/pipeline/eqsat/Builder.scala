@@ -73,6 +73,7 @@ private class RegionStack(fresh: () => Name) {
 }
 
 private class FunctionBuilder(
+    name: Name,
     rules: Seq[Rule],
     config: EGraph.Config,
     predefs: Set[Name],
@@ -82,7 +83,9 @@ private class FunctionBuilder(
 
   private val counter = Counter()
   private val graph = EGraph(Ruleset(rules), config)
-  private val env = Map.from(predefs.map { name => name -> graph.addNamedVar(name) })
+  private val env = Map.from((predefs + name).map { name =>
+    name -> graph.addNamedVar(name)
+  })
   private val regions = RegionStack(fresh)
 
   def register(name: Name): EClass = graph.addNamedVar(name)
@@ -272,7 +275,7 @@ class Builder(cfg: Builder.Config) extends pipeline.Builder {
 
   private def topfun(name: Name, args: Seq[(Name, Type)], outty: Type): FunctionStub = {
     def fill(body: => Exp): Unit = {
-      val builder = FunctionBuilder(cfg.rules, cfg.cfg, predefs(), this.fresh)
+      val builder = FunctionBuilder(name, cfg.rules, cfg.cfg, predefs(), this.fresh)
       current.push(builder)
       val tail = body
       builder.ret(tail)

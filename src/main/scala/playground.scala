@@ -15,6 +15,33 @@ import lms.helpers.{OptimizingDriver, DslOps}
 
 import Pattern.{Var => PVar, Node => PNode}
 
+@virtualize
+trait Dsl extends DslOps {
+  def fact: Rep[Int => Int] = fun { (x: Rep[Int]) =>
+    if x === 0 then unit(1) else x * fact(x - 1)
+  }
+}
+
+object Playground extends OptimizingDriver[Int, Int](Seq()) with Dsl {
+  override val codegen = lms.codegen.CCodegen()
+
+  def snippet(v: Rep[Int]): Rep[Int] = { fact(v) }
+
+  override def extract() = {
+    val prog = super.extract()
+    ast.Program(
+      prog.functions.map(_.mapRight(_.map(Propagate.run))),
+      prog.staticData
+    )
+  }
+}
+
+@main
+def main() = {
+  println(Playground.code)
+}
+
+/*
 @main
 def main() = {
   lms.runtime.Log = lms.util.Logger.debug
@@ -60,3 +87,4 @@ def main() = {
 
   println(graph.extract(result))
 }
+*/

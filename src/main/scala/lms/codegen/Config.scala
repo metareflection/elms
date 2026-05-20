@@ -17,4 +17,5 @@ object Config {
   def spaces(i: Int): IndentedWriter.IndentKind = IndentedWriter.UseSpaces(2)
 
   val scalaDefault = Config(0, spaces(2), "x")
+  val cDefault = Config(0, spaces(4), "x")
 }
