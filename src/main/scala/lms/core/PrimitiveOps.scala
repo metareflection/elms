@@ -1,11 +1,11 @@
-package lms.core
+package elms.core
 
 import scala.util.TupledFunction
 import annotation.implicitNotFound
 
-import lms.runtime.*
-import lms.core
-import lms.core.Op._
+import elms.runtime.*
+import elms.core
+import elms.core.Op._
 
 trait PrimitiveOps extends Base {
   def __ifThenElse[T](c: Rep[Boolean], t: => Rep[T], e: => Rep[T]): Rep[T] =

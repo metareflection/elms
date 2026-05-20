@@ -1,10 +1,10 @@
-package lms.test
+package elms.test
 
 import scala.language.implicitConversions
 
-import lms.prelude.{_, given}
-import lms.helpers.SimpleDriver
-import lms.helpers.DslOps
+import elms.prelude.{_, given}
+import elms.helpers.SimpleDriver
+import elms.helpers.DslOps
 
 @virtualize
 class VirtualizeTests extends SnapshotFunSuite {

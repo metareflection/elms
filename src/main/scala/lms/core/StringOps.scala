@@ -1,6 +1,6 @@
-package lms.core
+package elms.core
 
-import lms.core.Op._
+import elms.core.Op._
 
 trait StringOps extends PrimitiveOps {
   lazy val stringLength: Rep[String => Int] = unsafeDeclare("String.length")

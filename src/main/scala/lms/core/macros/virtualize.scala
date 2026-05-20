@@ -1,6 +1,6 @@
-package lms.core.macros
+package elms.core.macros
 
-/* The main frontend driver for scala3-lms.
+/* The main frontend driver for scala3-elms.
  *
  * TODO:
  * - `unRep` is a bad function and should be excised. The main problem is that

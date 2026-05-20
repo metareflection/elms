@@ -1,12 +1,12 @@
-package lms.pipeline.simple
+package elms.pipeline.simple
 
 // A bog-standard builder producing an IR in ANF form according to Rompf '16.
 
-import lms.core.{Type, Op, Name, StaticData}, Op._
-import lms.pipeline
-import lms.core.tree as ast
-import lms.runtime.Log
-import lms.util.{Plumbing, Counter}
+import elms.core.{Type, Op, Name, StaticData}, Op._
+import elms.pipeline
+import elms.core.tree as ast
+import elms.runtime.Log
+import elms.util.{Plumbing, Counter}
 
 class Builder extends pipeline.Builder {
   type Exp = ast.Term

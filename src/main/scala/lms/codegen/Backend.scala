@@ -1,7 +1,7 @@
-package lms.codegen
+package elms.codegen
 
-import lms.core.tree as ast
-import lms.util.IndentedWriter
+import elms.core.tree as ast
+import elms.util.IndentedWriter
 
 abstract class Backend(cfg: Config) {
   def emit(prog: ast.Program, out: java.io.PrintStream): Unit

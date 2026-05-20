@@ -1,11 +1,11 @@
-package lms.core
+package elms.core
 
 import scala.collection.mutable
 
-import lms.core.{Op, Name}
-import lms.core.tree as ast
-import lms.pipeline
-import lms.util.ClosureCompare
+import elms.core.{Op, Name}
+import elms.core.tree as ast
+import elms.pipeline
+import elms.util.ClosureCompare
 
 abstract class Driver extends Base with ClosureCompare {
   protected val builder: pipeline.Builder

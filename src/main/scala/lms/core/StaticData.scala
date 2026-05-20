@@ -1,6 +1,6 @@
-package lms.core
+package elms.core
 
-import lms.core.Givens.given
+import elms.core.Givens.given
 
 sealed trait StaticData {
   def ty: Type

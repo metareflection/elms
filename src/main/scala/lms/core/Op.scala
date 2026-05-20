@@ -1,6 +1,6 @@
 // Contains the operations supported by LMS.
 
-package lms.core
+package elms.core
 
 sealed trait Op derives CanEqual
 

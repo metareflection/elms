@@ -1,6 +1,6 @@
-package lms.core
+package elms.core
 
-import lms.core.Op._
+import elms.core.Op._
 
 trait BooleanOps extends Base {
   extension (lhs: Rep[Boolean])

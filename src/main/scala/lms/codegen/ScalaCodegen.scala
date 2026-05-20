@@ -1,12 +1,12 @@
-package lms.codegen
+package elms.codegen
 
-import lms.core.*
-import lms.core.Op.*
-import lms.core.Name
-import lms.core.tree as ast
-import lms.core.tree.View
-import lms.util.IndentedWriter
-import lms.runtime.Log
+import elms.core.*
+import elms.core.Op.*
+import elms.core.Name
+import elms.core.tree as ast
+import elms.core.tree.View
+import elms.util.IndentedWriter
+import elms.runtime.Log
 
 class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
   import ast._

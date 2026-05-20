@@ -1,13 +1,13 @@
-package lms.pipeline.eqsat
+package elms.pipeline.eqsat
 
 import scala.collection.mutable
 import scala.language.implicitConversions
 
-import lms.core, core.Op, core.Name
-import lms.core.tree as ast
-import lms.runtime.Log
-import lms.util.Plumbing.*
-import lms.util.CountOrInf, CountOrInf.*
+import elms.core, core.Op, core.Name
+import elms.core.tree as ast
+import elms.runtime.Log
+import elms.util.Plumbing.*
+import elms.util.CountOrInf, CountOrInf.*
 
 import Pattern.{Var => PVar, Node => PNode}
 

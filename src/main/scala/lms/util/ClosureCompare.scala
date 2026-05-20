@@ -1,4 +1,4 @@
-package lms.util
+package elms.util
 
 import java.util.Base64
 import java.io.{Externalizable, ObjectInput, ObjectOutput}

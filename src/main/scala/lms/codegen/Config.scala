@@ -1,6 +1,6 @@
-package lms.codegen
+package elms.codegen
 
-import lms.util.IndentedWriter
+import elms.util.IndentedWriter
 
 /** General formatting configuration for code generation.
   *

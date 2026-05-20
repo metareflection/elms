@@ -1,4 +1,4 @@
-package lms.core
+package elms.core
 
 import annotation.implicitNotFound
 

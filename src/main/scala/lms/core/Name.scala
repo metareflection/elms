@@ -1,4 +1,4 @@
-package lms.core
+package elms.core
 
 sealed abstract class Name {
   def render(prefix: String): String

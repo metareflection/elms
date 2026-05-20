@@ -1,14 +1,14 @@
-package lms.pipeline.eqsat
+package elms.pipeline.eqsat
 
 import scala.collection.mutable
 
-import lms.core.{Type, Op, Name}
-import lms.core.tree as ast
-import lms.pipeline
-import lms.util.{Counter, SourceContext}
-import lms.util.Plumbing.*
-import lms.util.collection.*
-import lms.runtime.*
+import elms.core.{Type, Op, Name}
+import elms.core.tree as ast
+import elms.pipeline
+import elms.util.{Counter, SourceContext}
+import elms.util.Plumbing.*
+import elms.util.collection.*
+import elms.runtime.*
 
 import EGraph.EClass
 import Stmt.*

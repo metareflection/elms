@@ -1,4 +1,4 @@
-package lms.util
+package elms.util
 
 import scala.language.implicitConversions
 

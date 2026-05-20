@@ -1,14 +1,14 @@
-package lms.codegen
+package elms.codegen
 
-import lms.core.*
-import lms.core.Op.*
-import lms.core.Name
-import lms.core.tree as ast
-import lms.core.tree.View
-import lms.core.Givens.given
-import lms.util.IndentedWriter
-import lms.util.collection.*
-import lms.runtime.Log
+import elms.core.*
+import elms.core.Op.*
+import elms.core.Name
+import elms.core.tree as ast
+import elms.core.tree.View
+import elms.core.Givens.given
+import elms.util.IndentedWriter
+import elms.util.collection.*
+import elms.runtime.Log
 
 class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
   import ast._

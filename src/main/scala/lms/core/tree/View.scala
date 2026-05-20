@@ -1,9 +1,9 @@
-package lms.core.tree
+package elms.core.tree
 
 import scala.compiletime.constValue
 
-import lms.core.{Type, Primitive, Op, Name}
-import lms.runtime.Log
+import elms.core.{Type, Primitive, Op, Name}
+import elms.runtime.Log
 
 object View {
   private def warnTooMany(name: String): Unit = Log

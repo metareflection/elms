@@ -1,6 +1,6 @@
-package lms.core
+package elms.core
 
-import lms.core.Op._
+import elms.core.Op._
 
 trait ArrayOps extends PrimitiveOps {
   def newArray[A: Typable](i: Rep[Int]): Rep[Array[A]] =

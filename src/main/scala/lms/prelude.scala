@@ -1,7 +1,12 @@
-package lms.prelude
+package elms.prelude
 
-export lms.core.Givens.given
-export lms.core.static.given
-export lms.core.macros.virtualize
-export lms.core.Typable
-export lms.core.PrimitiveOps
+export elms.core.Givens.given
+export elms.core.static.given
+export elms.core.macros.virtualize
+export elms.core.Typable
+export elms.core.Base
+export elms.core.PrimitiveOps
+export elms.helpers.DslOps
+export elms.helpers.SnippetDriver
+export elms.helpers.SimpleDriver
+export elms.helpers.OptimizingDriver

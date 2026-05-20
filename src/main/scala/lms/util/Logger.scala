@@ -1,4 +1,4 @@
-package lms.util
+package elms.util
 
 trait Logger {
   def pathDepth = 1

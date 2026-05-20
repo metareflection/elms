@@ -1,9 +1,9 @@
-package lms.pipeline
+package elms.pipeline
 
-import lms.core.{Name, Primitive}
-import lms.core.Givens.given
-import lms.core.Op
-import lms.core.tree.*
+import elms.core.{Name, Primitive}
+import elms.core.Givens.given
+import elms.core.Op
+import elms.core.tree.*
 
 object Propagate {
   sealed trait Fact

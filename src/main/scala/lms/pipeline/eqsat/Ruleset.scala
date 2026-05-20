@@ -1,6 +1,6 @@
-package lms.pipeline.eqsat
+package elms.pipeline.eqsat
 
-import lms.core.Op
+import elms.core.Op
 
 enum Pattern {
   case Var(name: String)

@@ -1,4 +1,4 @@
-package lms.core
+package elms.core
 
 import scala.Conversion
 import annotation.implicitNotFound

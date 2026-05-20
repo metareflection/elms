@@ -1,4 +1,4 @@
-package lms.util.collection
+package elms.util.collection
 
 import scala.collection.mutable
 

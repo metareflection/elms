@@ -1,17 +1,17 @@
-package lms
+package elms
 
 import scala.language.implicitConversions
 
-import lms.prelude.{_, given}
-import lms.core.Op.*
-import lms.core.tree as ast
-import lms.pipeline.eqsat.*
-import lms.pipeline.simple
-import lms.pipeline.Propagate
-import lms.runtime.Log
-import lms.util.Plumbing.*
+import elms.prelude.{_, given}
+import elms.core.Op.*
+import elms.core.tree as ast
+import elms.pipeline.eqsat.*
+import elms.pipeline.simple
+import elms.pipeline.Propagate
+import elms.runtime.Log
+import elms.util.Plumbing.*
 
-import lms.helpers.{OptimizingDriver, DslOps}
+import elms.helpers.{OptimizingDriver, DslOps}
 
 import Pattern.{Var => PVar, Node => PNode}
 
@@ -23,7 +23,7 @@ trait Dsl extends DslOps {
 }
 
 object Playground extends OptimizingDriver[Int, Int](Seq()) with Dsl {
-  override val codegen = lms.codegen.CCodegen()
+  override val codegen = elms.codegen.CCodegen()
 
   def snippet(v: Rep[Int]): Rep[Int] = { fact(v) }
 
@@ -44,7 +44,7 @@ def main() = {
 /*
 @main
 def main() = {
-  lms.runtime.Log = lms.util.Logger.debug
+  elms.runtime.Log = elms.util.Logger.debug
 
   val addcomm = Rule.equivalence(
     PNode(Plus, Vector(PVar("x"), PVar("y"))),

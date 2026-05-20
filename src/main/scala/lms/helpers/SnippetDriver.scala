@@ -1,11 +1,11 @@
-package lms.helpers
+package elms.helpers
 
-import lms.core.{Driver, Typable, tree as ast}
-import lms.pipeline, pipeline.simple
-import lms.pipeline.eqsat, eqsat.Rule
-import lms.pipeline.Propagate
-import lms.codegen.{Backend, ScalaCodegen}
-import lms.util.Plumbing.*
+import elms.core.{Driver, Typable, tree as ast}
+import elms.pipeline, pipeline.simple
+import elms.pipeline.eqsat, eqsat.Rule
+import elms.pipeline.Propagate
+import elms.codegen.{Backend, ScalaCodegen}
+import elms.util.Plumbing.*
 
 abstract class SnippetDriver[A: Typable, B: Typable] extends Driver {
   val codegen: Backend

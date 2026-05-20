@@ -1,14 +1,14 @@
-package lms.test
+package elms.test
 
 import scala.language.implicitConversions
 
 // An adaptation of the original LMS's Shonan tutorial. This solves the HMM
 // problem from the Shonan challenge.
 
-import lms.prelude._
-import lms.prelude.given
-import lms.helpers.OptimizingDriver
-import lms.helpers.DslOps
+import elms.prelude._
+import elms.prelude.given
+import elms.helpers.OptimizingDriver
+import elms.helpers.DslOps
 
 @virtualize
 class ShonanTest extends SnapshotFunSuite {

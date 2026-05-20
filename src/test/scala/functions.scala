@@ -1,10 +1,10 @@
-package lms.test
+package elms.test
 
 import scala.language.implicitConversions
 
-import lms.prelude._
-import lms.prelude.given
-import lms.helpers.DslOps
+import elms.prelude._
+import elms.prelude.given
+import elms.helpers.DslOps
 
 // Tests to ensure that implicit resolution is set up correctly.
 // These should all typecheck and compile.

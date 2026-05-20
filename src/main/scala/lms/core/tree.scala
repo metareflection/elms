@@ -1,7 +1,7 @@
-package lms.core.tree
+package elms.core.tree
 
-import lms.core.{Op, Type, Name, StaticData}
-import lms.util.Plumbing.*
+import elms.core.{Op, Type, Name, StaticData}
+import elms.util.Plumbing.*
 
 sealed abstract class Term derives CanEqual
 

@@ -1,4 +1,4 @@
-name := "lms3"
+name := "elms"
 
 ThisBuild / scalaVersion := "3.6.4"
 

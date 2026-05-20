@@ -1,6 +1,6 @@
-package lms.runtime
+package elms.runtime
 
-import lms.util.Logger
+import elms.util.Logger
 
 var Log: Logger = Logger.default
 

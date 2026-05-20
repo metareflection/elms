@@ -1,4 +1,4 @@
-package lms.pipeline.eqsat
+package elms.pipeline.eqsat
 
 class NaiveScheduler extends Scheduler {
   def shouldRun(rule: Expansion, iteration: Int): Boolean = true

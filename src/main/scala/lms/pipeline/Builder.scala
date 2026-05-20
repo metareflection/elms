@@ -1,8 +1,8 @@
-package lms.pipeline
+package elms.pipeline
 
-import lms.core.{Type, Op, Name, StaticData}
-import lms.core.tree.Program
-import lms.util.Counter
+import elms.core.{Type, Op, Name, StaticData}
+import elms.core.tree.Program
+import elms.util.Counter
 
 abstract class Builder {
   type Exp

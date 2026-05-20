@@ -1,6 +1,6 @@
-package lms.helpers
+package elms.helpers
 
-import lms.core._
+import elms.core._
 
 trait DslOps
     extends Base
