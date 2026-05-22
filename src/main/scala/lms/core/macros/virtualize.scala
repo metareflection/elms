@@ -3,13 +3,8 @@ package elms.core.macros
 /* The main frontend driver for scala3-elms.
  *
  * TODO:
- * - `unRep` is a bad function and should be excised. The main problem is that
- *   `repOrVar` widens the type, ensuring that `1` reports type `Int` instead
- *   of `1`, but `unRep` loses this information. Instead, we should use the
- *   `RepLike` extractor.
- * - Handling of `Var`s in general is very messy and should be rethought.
- * - `dropTrailingUnitInWhileBody` should be rewritten in terms of
- *   `ensureTrailingRep`.
+ * - We currently check for a lot of hardcoded names, like `Rep` and some
+ *   conversion functions.
  */
 
 import scala.reflect.ClassTag
@@ -132,6 +127,25 @@ class virtualize extends MacroAnnotation {
           }
 
           Select.overloaded(thist, "__ifThenElse", List(trep), List(xt, thent, elset))
+        }
+
+        case While(Apply(conv, List(x)), body) => {
+          val thist = makeThis(owner)
+
+          val xt =
+            if (conv.show.endsWith("__virtualizedBoolConvInternal.apply")) {
+              this.transformTerm(x)(owner)
+            } else { return super.transformTerm(tree)(owner) }
+
+          val unitf = findMethods(owner, "unit") match {
+            case Nil => report
+                .errorAndAbort("LMS internal error: no [unit] found for self")
+            case x :: _ => thist.select(x)
+          }
+
+          val bodyt = ensureTrailingRep(this.transformTerm(body)(owner), thist, unitf)
+
+          Select.overloaded(thist, "__whileDo", Nil, List(xt, bodyt))
         }
 
         case _ => super.transformTerm(tree)(owner)

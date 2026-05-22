@@ -156,9 +156,12 @@ private class FunctionBuilder(
         }
       case Op.RangeForEach(x) => children match {
           case Seq(st, end, body) => regions
-              .push(name, cls, RangeFor(x, st.unwrap, end.unwrap, asStmt(body)))
+              .push(name, cls, RangeFor(x, st.unwrap, end.unwrap, body.asStmt))
           case _ => throw LMSRuntimeException("BUG: RangeForEach invalid children")
         }
+      case Op.While => children match {
+        case Seq(cond, body) => regions.push(name, cls, While(cond.asStmt, body.asStmt))
+      }
     }
     Local(cls)
   }
@@ -239,6 +242,14 @@ private class FunctionBuilder(
       (
         prefix1 ++ prefix2,
         ast.E(Op.RangeForEach(x), Seq(stt, endt, elab(body, cache.enter)))
+      )
+    }
+    case While(cond, body) => {
+      val guardt = elab(cond, cache)
+      val bodyt = elab(body, cache.enter)
+      (
+        Seq(),
+        ast.E(Op.While, Seq(guardt, bodyt))
       )
     }
   }

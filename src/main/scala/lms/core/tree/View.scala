@@ -180,6 +180,12 @@ object View {
       withArity[3](Op.IfThenElse, "IfThenElse", t)
   }
 
+  object While {
+    def apply(guard: Term, body: Term) = E(Op.While, Seq(guard, body))
+    def unapply(t: Term): Option[(Term, Term)] =
+      withArity[2](Op.While, "While", t)
+  }
+
   object ArrayNew {
     def apply(ty: Type, t: Term) = E(Op.ArrayNew(ty), Seq(t))
     def unapply(t: Term): Option[(Type, Term)] = t match {

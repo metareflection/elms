@@ -11,6 +11,9 @@ trait PrimitiveOps extends Base {
   def __ifThenElse[T](c: Rep[Boolean], t: => Rep[T], e: => Rep[T]): Rep[T] =
     unsafeReflect(IfThenElse, c, region(t), region(e))
 
+  def __whileDo(guard: => Rep[Boolean], body: => Rep[Unit]): Rep[Unit] =
+    unsafeReflect(While, region(guard), region(body))
+
   given __virtualizedBoolConvInternal: Conversion[Rep[Boolean], Boolean] with
     def apply(x: Rep[Boolean]) = {
       throw new LMSRuntimeException(

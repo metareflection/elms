@@ -45,7 +45,7 @@ class GettingStartedTest extends SnapshotFunSuite {
   test("range1") {
     val snippet = new DslDriver[Int,Unit] {
       def snippet(x: Rep[Int]) = {
-        for (i <- (0 until 3): Range) {
+        for (i <- (0.until(3)): Range) {
           Builtins.println(i)
         }
 
@@ -57,7 +57,7 @@ class GettingStartedTest extends SnapshotFunSuite {
   test("range2") {
     val snippet = new DslDriver[Int,Unit] {
       def snippet(x: Rep[Int]) = {
-        for (i <- (0 until x): Rep[Range]) {
+        for (i <- (0.until(x)): Rep[Range]) {
           Builtins.println(i)
         }
 

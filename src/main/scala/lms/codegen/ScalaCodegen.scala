@@ -123,6 +123,15 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
         out.emitMaybeParenthesized(t)
         out.emit(".end")
       }
+      case View.While(guard, body) => {
+        out.emitln(s"while {")
+        out.indented { out.emitTerm(guard) }
+        out.emitln("")
+        out.emitln("} {")
+        out.indented { out.emitTerm(body) }
+        out.emitln("")
+        out.emitln("}")
+      }
       case View.RangeForEach(name, st, end, body) => {
         out.emit(s"for (${name.render(cfg.varPrefix)} <- ")
         out.emitMaybeParenthesized(st)

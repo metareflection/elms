@@ -9,6 +9,7 @@ enum Stmt {
   case Let(x: Name, lhs: Stmt, tail: Stmt)
   case Effect(op: Op.Effectful, children: Seq[EClass])
   case If(cond: EClass, thn: Stmt, els: Stmt)
-  case Lambda(args: Seq[(Name, Type)], outty: Type, body: Stmt)
   case RangeFor(v: Name, st: EClass, end: EClass, body: Stmt)
+  case While(cond: Stmt, body: Stmt)
+  case Lambda(args: Seq[(Name, Type)], outty: Type, body: Stmt)
 }

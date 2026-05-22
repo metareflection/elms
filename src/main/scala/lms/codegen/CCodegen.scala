@@ -23,8 +23,9 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
     prog.staticData.foreach { (name, data) => w.emitNamedStaticData(name, data) }
     if prog.staticData.nonEmpty then w.emitln("")
 
-    val topEnv: Env =
-      prog.functions.map { (fname, fdef) => fname -> functionType(fdef) }.toMap
+    val topEnv: Env = prog.functions.map { (fname, fdef) =>
+      fname -> functionType(fdef)
+    }.toMap
 
     prog.functions.foreach { (fname, fdef) => w.emitFunction(topEnv)(fname, fdef) }
   }
@@ -99,8 +100,7 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
   // we walk the tree to print it. This would be a quadratic speedup in term
   // size, but I'm reasonably sure that it won't be noticable in practice.
 
-  private def inferType(env: Env)(term: Term): Option[Type] =
-    term match {
+  private def inferType(env: Env)(term: Term): Option[Type] = term match {
     case V(name) => env.get(name)
 
     case View.Const(const) => Some(const.prim)
@@ -122,6 +122,7 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
     case View.RangeStart(_) | View.RangeEnd(_) => Some(INT)
 
     case View.RangeForEach(_, _, _, _) => Some(UNIT)
+    case View.While(_, _)              => Some(UNIT)
 
     case View.ArrayNew(ty, _) => Some(ARRAY(ty))
 
@@ -140,7 +141,7 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
     case Function(args, outty, _) => Some(ARROW(args.map(_._2), outty))
 
     case E(_, _) => None
-    }
+  }
 
   private def functionType(fdef: Function): Type =
     ARROW(fdef.args.map(_._2), fdef.outty)
@@ -182,14 +183,14 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
 
       ty match {
         case Some(UNIT) => out.emitStmt(env)(e)
-        case Some(ty) => {
-            out.emit(s"${ty.render} ${x.render(cfg.varPrefix)} = ")
-            out.emitExpr(env)(e)
-            out.emitln(";")
+        case Some(ty)   => {
+          out.emit(s"${ty.render} ${x.render(cfg.varPrefix)} = ")
+          out.emitExpr(env)(e)
+          out.emitln(";")
         }
         case None => {
-            out.invalidTerm(s"Could not infer C type for let-bound term: $e")
-            out.emitln(";")
+          out.invalidTerm(s"Could not infer C type for let-bound term: $e")
+          out.emitln(";")
         }
       }
 
@@ -270,6 +271,9 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
       case View.RangeForEach(_, _, _, _) => out
           .invalidTerm(s"for-loop cannot be emitted as a C expression: $term")
 
+      case View.While(_, _) => out
+          .invalidTerm(s"while-loop cannot be emitted as a C expression: $term")
+
       case Function(_, _, _) => out
           .invalidTerm(s"C backend does not support anonymous functions/lambdas: $term")
 
@@ -306,6 +310,14 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
         out.emit(name.render(cfg.varPrefix))
         out.emitln("++) {")
         out.indented { out.emitStmt(env + (name -> INT))(body) }
+        out.emitln("}")
+      }
+
+      case View.While(guard, body) => {
+        out.emit("while (")
+        out.emitExpr(env)(guard)
+        out.emitln(") {")
+        out.indented { out.emitStmt(env)(body) }
         out.emitln("}")
       }
 
@@ -359,6 +371,12 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
         out.emitReturnFallback(outty)
       }
 
+      case View.While(_, _) => {
+        out.invalidTerm(s"Cannot return the result of a while-loop in C: $term")
+        out.emitln(";")
+        out.emitReturnFallback(outty)
+      }
+
       case Function(_, _, _) => {
         out
           .invalidTerm(s"C backend does not support anonymous functions/lambdas: $term")
@@ -383,7 +401,7 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
 
     private def emitLetExpr(env: Env)(x: Name, e1: Term, e2: Term): Unit = {
       out.emitln("({")
-      out.indented{
+      out.indented {
         val ty = emitAssign(env)(x, e1)
         out.emitExprResult(env.setOrRemove(x, ty))(e2)
       }
@@ -416,9 +434,16 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
         out.emit("; ")
         out.emit(name.render(cfg.varPrefix))
         out.emitln("++) {")
-        out.indented {
-          out.emitStmt(env + (name -> INT))(body)
-        }
+        out.indented { out.emitStmt(env + (name -> INT))(body) }
+        out.emitln("}")
+        out.emitln("/* unit */;")
+      }
+
+      case View.While(guard, body) => {
+        out.emit("while (")
+        out.emitExpr(env)(guard)
+        out.emitln(") {")
+        out.indented { out.emitStmt(env)(body) }
         out.emitln("}")
         out.emitln("/* unit */;")
       }
@@ -433,7 +458,8 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
       }
 
       case Function(_, _, _) => {
-        out.invalidTerm(s"C backend does not support anonymous functions/lambdas: $term")
+        out
+          .invalidTerm(s"C backend does not support anonymous functions/lambdas: $term")
         out.emitln(";")
       }
 

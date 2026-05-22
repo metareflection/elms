@@ -34,6 +34,7 @@ object Op {
   case object RangeEnd extends Pure
 
   case object IfThenElse extends Control
+  case object While extends Control
 
   case class ArrayNew(val typ: Type) extends Effectful
   case class ArrayInit[T: Typable](init: Seq[T]) extends Effectful
