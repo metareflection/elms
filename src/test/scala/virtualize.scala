@@ -3,7 +3,7 @@ package elms.test
 import scala.language.implicitConversions
 
 import elms.prelude.{_, given}
-import elms.helpers.SimpleDriver
+import elms.helpers.SimpleSnippetDriver
 import elms.helpers.DslOps
 
 @virtualize
@@ -11,7 +11,7 @@ class VirtualizeTests extends SnapshotFunSuite {
   val under = "virtualize/"
 
   test("pow5") {
-    object Snippet extends SimpleDriver[Int, Int] with DslOps {
+    object Snippet extends SimpleSnippetDriver[Int, Int] with DslOps {
       def pow(x: Rep[Int], n: Int): Rep[Int] = if n == 0 then 1 else x * pow(x, n - 1)
       def snippet(x: Rep[Int]): Rep[Int] = pow(x, 5)
     }
@@ -19,14 +19,14 @@ class VirtualizeTests extends SnapshotFunSuite {
   }
 
   test("simple if") {
-    object Snippet extends SimpleDriver[Boolean, Int] with DslOps {
+    object Snippet extends SimpleSnippetDriver[Boolean, Int] with DslOps {
       def snippet(x: Rep[Boolean]): Rep[Int] = if x then 1 else 0
     }
     check("if-basic", Snippet.code)
   }
 
   test("if nested") {
-    object Snippet extends SimpleDriver[Boolean, Int] with DslOps {
+    object Snippet extends SimpleSnippetDriver[Boolean, Int] with DslOps {
       def snippet(x: Rep[Boolean]): Rep[Int] = {
         if x then { if x then 1 else 2 } else { 0 }
       }
@@ -35,14 +35,14 @@ class VirtualizeTests extends SnapshotFunSuite {
   }
 
   test("equality guard") {
-    object Snippet extends SimpleDriver[Int, Int] with DslOps {
+    object Snippet extends SimpleSnippetDriver[Int, Int] with DslOps {
       def snippet(x: Rep[Int]): Rep[Int] = { if (x === 1) 2 else x }
     }
     check("if-tutorial", Snippet.code)
   }
 
   test("pow-square") {
-    object Snippet extends SimpleDriver[Int, Int] with DslOps {
+    object Snippet extends SimpleSnippetDriver[Int, Int] with DslOps {
       def square(x: Rep[Int]): Rep[Int] = x * x
 
       def power(b: Rep[Int], n: Int): Rep[Int] =
@@ -56,7 +56,7 @@ class VirtualizeTests extends SnapshotFunSuite {
   }
 
   test("function calls") {
-    object Snippet extends SimpleDriver[Int, Int] with DslOps {
+    object Snippet extends SimpleSnippetDriver[Int, Int] with DslOps {
       def snippet(x: Rep[Int]) = {
         def compute(b: Rep[Boolean]): Rep[Int] = {
           // the if is deferred to the second stage
@@ -69,7 +69,7 @@ class VirtualizeTests extends SnapshotFunSuite {
   }
 
   test("recursive functions") {
-    object Snippet extends SimpleDriver[Int, Int] with DslOps {
+    object Snippet extends SimpleSnippetDriver[Int, Int] with DslOps {
       def fact: Rep[Int => Int] = fun { (x: Rep[Int]) =>
         if x === 0 then unit(1) else snippet(x - 1)
       }

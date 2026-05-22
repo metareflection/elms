@@ -7,7 +7,7 @@ import scala.language.implicitConversions
 
 import elms.prelude._
 import elms.prelude.given
-import elms.helpers.OptimizingDriver
+import elms.helpers.OptimizingSnippetDriver
 import elms.helpers.DslOps
 
 @virtualize
@@ -15,7 +15,7 @@ class ShonanTest extends SnapshotFunSuite {
   val under = "shonan/"
 
   abstract class DslDriver[A: Typable, B: Typable]
-    extends OptimizingDriver[A, B](Seq()) with DslOps
+    extends OptimizingSnippetDriver[A, B](Seq()) with DslOps
 
   val A = scala.Array
 
