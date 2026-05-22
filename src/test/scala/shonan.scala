@@ -14,9 +14,6 @@ import elms.helpers.DslOps
 class ShonanTest extends SnapshotFunSuite {
   val under = "shonan/"
 
-  abstract class DslDriver[A: Typable, B: Typable]
-    extends OptimizingSnippetDriver[A, B](Seq()) with DslOps
-
   val A = scala.Array
 
   val a = A(
