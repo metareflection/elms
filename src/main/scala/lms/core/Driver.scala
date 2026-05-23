@@ -10,7 +10,7 @@ import elms.util.ClosureCompare
 abstract class Driver extends Base with ClosureCompare {
   protected val builder: pipeline.Builder
   protected type Exp = builder.Exp
-  case class Rep[+T](wrapped: Exp)
+  case class Rep[+T](wrapped: Exp) extends __Virtualized[T]
 
   def variable[A](name: Name): Rep[A] = unsafeWrap(builder.variable(name))
 

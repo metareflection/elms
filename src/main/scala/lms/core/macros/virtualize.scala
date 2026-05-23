@@ -50,11 +50,16 @@ class virtualize extends MacroAnnotation {
       Apply(Apply(TypeApply(unitf, List(TypeTree.of[Unit])), List(x)), List(unitW))
     }
 
-    def unRep(t: TypeRepr): Option[TypeRepr] = t.widen match {
-      case AppliedType(f, List(arg)) =>
-        // XXX - do something better
-        if f.show.endsWith("Rep") then Some(arg) else None
-      case t => None
+    def unRep(t: TypeRepr): Option[TypeRepr] = {
+      val widened = t.widen.dealias
+      val marker = TypeRepr.of[elms.core.__Virtualized[?]].typeSymbol
+
+      if widened.derivesFrom(marker) then
+        widened.baseType(marker) match {
+          case AppliedType(_, List(arg)) => Some(arg)
+          case _ => None
+        }
+      else None
     }
 
     def flattenBlockT(t: Statement): (List[Statement], Term) = t match {
@@ -87,7 +92,7 @@ class virtualize extends MacroAnnotation {
       val tLiftableW = Implicits.search(tLiftable.tpe) match {
         case success: ImplicitSearchSuccess => success.tree
         case failure: ImplicitSearchFailure => report.errorAndAbort(
-            "couldn't construct type manifest for type Rep[" + inferredTyp.show + "]"
+            "couldn't construct type manifest for type " + tLiftable.show
           )
       }
 

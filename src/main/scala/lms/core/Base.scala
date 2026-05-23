@@ -4,7 +4,7 @@ import scala.Conversion
 import annotation.implicitNotFound
 
 trait Base {
-  type Rep[+T]
+  type Rep[+T] <: __Virtualized[T]
   protected type Exp
 
   @implicitNotFound("${A} cannot be lifted")
