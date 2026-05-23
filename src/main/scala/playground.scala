@@ -14,16 +14,18 @@ import elms.util.Plumbing.*
 import Pattern.{Var => PVar, Node => PNode}
 
 @virtualize
-trait Ackermann extends DslOps {
-  def a(m: Int): Rep[Int => Int] = fun { (n: Rep[Int]) =>
-    if m == 0 then n + 1 else if n === 0 then a(m - 1)(1) else a(m - 1)(a(m)(n - 1))
-  }
-}
+object Playground extends OptimizingSnippetDriver[Int, Int] with DslOps {
+  //override val codegen = elms.codegen.CCodegen()
 
-@virtualize
-trait Fact extends DslOps {
-  def fact: Rep[Int => Int] = fun { (n: Rep[Int]) =>
-    if n === 0 then unit(1) else n * fact(n-1)
+  def snippet(x: Rep[Int]): Rep[Int] = {
+    val y = newVar(x)
+    val result = newVar(0)
+    while y.get > 0 do {
+      result := result.get + y.get
+      y := y.get - 1
+    }
+
+    result.get
   }
 }
 
@@ -37,10 +39,8 @@ def main() = {
 
   val ack2 = specialize(2)
   println(ack2.code)
-  */
-  println(new OptimizingSnippetDriver[Int, Int] with Fact {
-    def snippet(n: Rep[Int]): Rep[Int] = fact(n)
-  }.code)
+   */
+  println(Playground.code)
 }
 
 /*
@@ -90,3 +90,4 @@ def main() = {
   println(graph.extract(result))
 }
  */
+

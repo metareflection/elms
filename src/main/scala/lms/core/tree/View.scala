@@ -2,9 +2,13 @@ package elms.core.tree
 
 import scala.compiletime.constValue
 
-import elms.core.{Type, Primitive, Op, Name}
+import elms.core.{Type, Typable, Primitive, Op, Name}
 import elms.runtime.Log
 
+// CR-soon cwong: This design is nicer to program against than raw `ast.E` but
+// is a huge maintenance hazard. It is sort of the worst of both worlds in that
+// `Op` is a big hardcoded list of supported operations but still no exhaustivity
+// checking in consumers.
 object View {
   private def warnTooMany(name: String): Unit = Log
     .warning(s"BUG: $name with too many children")
@@ -46,9 +50,6 @@ object View {
     case _ => None
   }
 
-  // CR-someday cwong: It would be nice to automatically generate this and
-  // Op.scala from a common place
-
   class Const[T: Primitive] {
     def unapply(t: Term): Option[T] = t match {
       case E(c @ Op.Const(v), s) => {
@@ -66,17 +67,30 @@ object View {
   }
 
   object Const {
-    def pack[A](c: Op.Const[A])(using aprim: Primitive[A]): AnyConst =
-      new AnyConst {
-        type T = A
-        val prim = aprim
-        val value = c.v
-      }
+    def pack[A](c: Op.Const[A])(using aprim: Primitive[A]): AnyConst = new AnyConst {
+      type T = A
+      val prim = aprim
+      val value = c.v
+    }
 
     def unapply(t: Term): Option[AnyConst] = t match {
       case E(c @ Op.Const(_), s) => {
         if s.length > 0 then warnTooMany("`Const`")
         Some(pack(c)(using c.prim))
+      }
+      case _ => None
+    }
+  }
+
+  // CR cwong: this sucks
+  object Let {
+    def unapply(t: Term): Option[(Name, Option[Type], Term, Term)] = t match {
+      case elms.core.tree.Let(x, me1, e2) => {
+        val (mty, e1) = me1 match {
+          case VarNew(ty, e) => { (Some(ty), e) }
+          case _             => (None, me1)
+        }
+        Some((x, mty, e1, e2))
       }
       case _ => None
     }
@@ -94,6 +108,31 @@ object View {
       }
       case _ => None
     }
+  }
+
+  object VarNew {
+    def apply(ty: Type, t: Term): Term = E(Op.VarNew(ty), Seq(t))
+    def unapply(t: Term): Option[(Type, Term)] = t match {
+      case E(Op.VarNew(ty), s) => {
+        if s.length == 0 then {
+          errNone("VarNew")
+          return None
+        }
+        if s.length > 1 then { warnTooMany("VarNew") }
+
+        Some((ty, s(0)))
+      }
+      case _ => None
+    }
+  }
+
+  object VarGet {
+    def apply(t: Term): Term = E(Op.VarGet, Seq(t))
+    def unapply(t: Term): Option[Term] = withArity[1](Op.VarGet, "`VarGet`", t)
+  }
+  object VarSet {
+    def apply(t: Term, v: Term): Term = E(Op.VarSet, Seq(t, v))
+    def unapply(t: Term): Option[(Term, Term)] = withArity[2](Op.VarSet, "`VarSet`", t)
   }
 
   object Negate {
@@ -182,8 +221,7 @@ object View {
 
   object While {
     def apply(guard: Term, body: Term) = E(Op.While, Seq(guard, body))
-    def unapply(t: Term): Option[(Term, Term)] =
-      withArity[2](Op.While, "While", t)
+    def unapply(t: Term): Option[(Term, Term)] = withArity[2](Op.While, "While", t)
   }
 
   object ArrayNew {

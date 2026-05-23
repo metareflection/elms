@@ -87,4 +87,20 @@ class VirtualizeTests extends SnapshotFunSuite {
     }
     check("while", Snippet.code)
   }
+
+  test("vars") {
+    object Snippet extends SimpleSnippetDriver[Int, Int] with DslOps {
+      def snippet(x: Rep[Int]): Rep[Int] = {
+        val y = newVar(x)
+        val result = newVar(0)
+        while y.get > 0 do {
+          result := result.get + y.get
+          y := y.get - 1
+        }
+
+        result.get
+      }
+    }
+    check("var", Snippet.code)
+  }
 }

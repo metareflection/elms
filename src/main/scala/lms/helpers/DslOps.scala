@@ -6,6 +6,7 @@ trait DslOps
     extends Base
     with Builtins
     with PrimitiveOps
+    with VarOps
     with BooleanOps
     with IntegerOps
     with RangeOps

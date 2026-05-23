@@ -11,6 +11,10 @@ object Op {
 
   case class Const[T](val v: T)(using val prim: Primitive[T]) extends Pure
 
+  case class VarNew(val typ: Type) extends Effectful
+  case object VarGet extends Effectful
+  case object VarSet extends Effectful
+
   case object App extends Effectful
 
   case object Negate extends Pure

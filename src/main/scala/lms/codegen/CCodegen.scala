@@ -121,6 +121,10 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
     case View.Range(_, _)                      => None
     case View.RangeStart(_) | View.RangeEnd(_) => Some(INT)
 
+    case View.VarNew(ty, t) => Some(ty)
+    case View.VarGet(t) => inferType(env)(t)
+    case View.VarSet(_, _) => Some(UNIT)
+
     case View.RangeForEach(_, _, _, _) => Some(UNIT)
     case View.While(_, _)              => Some(UNIT)
 
@@ -233,6 +237,15 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
         out.emit(")")
       }
 
+      case View.VarNew(ty, t) => out.emitExpr(env)(t)
+      case View.VarGet(t) => out.emitExpr(env)(t)
+      case View.VarSet(t, v) => {
+        out.emitExpr(env)(t)
+        out.emit(" = ")
+        out.emitExpr(env)(v)
+        out.emit(";")
+      }
+
       case View.ArrayNew(ty, t) => {
         out.emit(s"(${ARRAY(ty).render})malloc(sizeof(${ty.render}) * ")
         out.emitExpr(env)(t)
@@ -244,6 +257,12 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
         out.emit("[")
         out.emitExpr(env)(i)
         out.emit("]")
+      }
+
+      case View.ArraySet(_, _, _) => {
+        out.emit("({")
+        out.emitStmt(env)(term)
+        out.emit("})")
       }
 
       case View.ArrayLength(arr) => out.invalidTerm(
@@ -259,12 +278,6 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
       case View.Range(_, _) => out.invalidTerm(
           s"C backend only supports ranges directly in foreach loops: $term"
         )
-
-      case View.ArraySet(_, _, _) => {
-        out.emit("({")
-        out.emitStmt(env)(term)
-        out.emit("})")
-      }
 
       case Let(x, e1, e2) => out.emitLetExpr(env)(x, e1, e2)
 

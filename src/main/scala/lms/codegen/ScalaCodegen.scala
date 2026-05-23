@@ -70,13 +70,18 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
     }
 
     private def emitTerm(term: Term): Unit = term match {
-      case V(name)         => out.emit(name.render(cfg.varPrefix))
-      case Let(x, e1, e2)  => {
-        out.emit(s"val ${x.render(cfg.varPrefix)} = ")
+      case V(name)                    => out.emit(name.render(cfg.varPrefix))
+      case View.Let(x, mutTy, e1, e2) => {
+        mutTy match {
+          case Some(ty) => out.emit(s"var ${x.render(cfg.varPrefix)}: ${ty.render} = ")
+          case None     => out.emit(s"val ${x.render(cfg.varPrefix)} = ")
+        }
         out.emitTerm(e1)
         out.emitln("")
         out.emitTerm(e2)
       }
+      case Let(x, e1, e2) => Log
+          .error("BUG: Got `Let` without matching `View.Let` (should be impossible)")
       case Function(args, _outty, body) => {
         out.emit("(")
         out.emit(renderArgs(args))
@@ -85,6 +90,15 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
         out.emitln("}")
       }
       case View.Const(const) => out.emit(const.value.render(using const.prim))
+
+      // CR-soon cwong: This is likely subtly broken in the case that the `Var`
+      // under inspection comes from something like a `Rep[Array[Var[T]]]`.
+      case View.VarGet(x)    => out.emitTerm(x)
+      case View.VarSet(x, v) => {
+        out.emitTerm(x)
+        out.emit(" = ")
+        out.emitMaybeParenthesized(v)
+      }
       case View.IfThenElse(guard, tthen, telse) => {
         out.emit("if ")
         out.emitMaybeParenthesized(guard)
@@ -127,7 +141,7 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
         out.emitln(s"while {")
         out.indented { out.emitTerm(guard) }
         out.emitln("")
-        out.emitln("} {")
+        out.emitln("} do {")
         out.indented { out.emitTerm(body) }
         out.emitln("")
         out.emitln("}")
