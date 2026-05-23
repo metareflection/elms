@@ -83,12 +83,15 @@ private class FunctionBuilder(
 
   private val counter = Counter()
   private val graph = EGraph(Ruleset(rules), config)
-  private val env = Map.from((predefs + name).map { name =>
+  private val env = mutable.Map.from((predefs + name).map { name =>
     name -> graph.addNamedVar(name)
   })
   private val regions = RegionStack(fresh)
 
-  def register(name: Name): EClass = graph.addNamedVar(name)
+  def register(name: Name): EClass = {
+    env(name) = graph.addNamedVar(name)
+    env(name)
+  }
 
   def ensureClass(name: Name): EClass = env.get(name).getOrElse {
     Log.warning(s"BUG: unregistered name $name was used before it was declared")
@@ -295,6 +298,7 @@ class Builder(cfg: Builder.Config) extends pipeline.Builder {
       functions(name) = F(ast.Function(args, outty, result))
     }
     functions(name) = Stub
+    current.foreach { _.register(name) }
     FunctionStub(Global(name), fill)
   }
 

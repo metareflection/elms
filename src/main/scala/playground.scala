@@ -20,16 +20,28 @@ trait Ackermann extends DslOps {
   }
 }
 
+@virtualize
+trait Fact extends DslOps {
+  def fact: Rep[Int => Int] = fun { (n: Rep[Int]) =>
+    if n === 0 then unit(1) else n * fact(n-1)
+  }
+}
+
 @main
 def main() = {
-  def specialize(m: Int): OptimizingSnippetDriver[Int,Int] = new OptimizingSnippetDriver[Int,Int] with Ackermann {
-    def snippet(n: Rep[Int]): Rep[Int] = a(m)(n)
-  }
+  /*
+  def specialize(m: Int): OptimizingSnippetDriver[Int, Int] =
+    new OptimizingSnippetDriver[Int, Int] with Ackermann {
+      def snippet(n: Rep[Int]): Rep[Int] = a(m)(n)
+    }
 
   val ack2 = specialize(2)
   println(ack2.code)
+  */
+  println(new OptimizingSnippetDriver[Int, Int] with Fact {
+    def snippet(n: Rep[Int]): Rep[Int] = fact(n)
+  }.code)
 }
-
 
 /*
 @main
@@ -77,4 +89,4 @@ def main() = {
 
   println(graph.extract(result))
 }
-*/
+ */
