@@ -45,4 +45,7 @@ object Op {
   case object ArrayGet extends Effectful
   case object ArraySet extends Effectful
   case object ArrayLength extends Pure
+
+  case class StructGet(val repr: StructRepr, val field: String) extends Effectful
+  case class StructSet(val field: String) extends Effectful
 }

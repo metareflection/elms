@@ -10,5 +10,6 @@ trait DslOps
     with BooleanOps
     with IntegerOps
     with RangeOps
-    with ArrayOps
     with StringOps
+    with ArrayOps
+    with StructOps

@@ -14,4 +14,6 @@ object instances {
 
   given [A: Primitive]: AsStaticData[A] = staticPrim
   given [A](using AsStaticData[A], Typable[A]): AsStaticData[Array[A]] = staticArray
+
+  given [A: StructManifest]: Typable[A] = typStruct
 }

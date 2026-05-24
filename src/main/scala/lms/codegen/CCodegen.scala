@@ -70,12 +70,13 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
 
   extension (ty: Type)
     private def render: String = ty match {
-      case UNIT     => "void"
-      case INT      => "int"
-      case BOOL     => "bool"
-      case CHAR     => "char"
-      case STRING   => "const char*"
-      case ARRAY(t) => s"${t.render}*"
+      case UNIT         => "void"
+      case INT          => "int"
+      case BOOL         => "bool"
+      case CHAR         => "char"
+      case STRING       => "const char *"
+      case ARRAY(t)     => s"${t.render} *"
+      case STRUCT(repr) => s"struct ${repr.name} *"
     }
 
     private def renderParam: String = ty.render
@@ -122,8 +123,8 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
     case View.RangeStart(_) | View.RangeEnd(_) => Some(INT)
 
     case View.VarNew(ty, t) => Some(ty)
-    case View.VarGet(t) => inferType(env)(t)
-    case View.VarSet(_, _) => Some(UNIT)
+    case View.VarGet(t)     => inferType(env)(t)
+    case View.VarSet(_, _)  => Some(UNIT)
 
     case View.RangeForEach(_, _, _, _) => Some(UNIT)
     case View.While(_, _)              => Some(UNIT)
@@ -134,8 +135,10 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
         case Some(ARRAY(elemTy)) => Some(elemTy)
         case _                   => None
       }
-    case View.ArraySet(_, _, _) => Some(UNIT)
-    case View.ArrayLength(_)    => Some(INT)
+    case View.ArraySet(_, _, _)         => Some(UNIT)
+    case View.ArrayLength(_)            => Some(INT)
+    case View.StructGet(repr, _, field) => repr.get(field)
+    case View.StructSet(_, _, _)        => Some(UNIT)
 
     case View.App(f, x) => inferType(env)(f) match {
         case Some(ARROW(_, out)) => Some(out)
@@ -238,12 +241,11 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
       }
 
       case View.VarNew(ty, t) => out.emitExpr(env)(t)
-      case View.VarGet(t) => out.emitExpr(env)(t)
-      case View.VarSet(t, v) => {
-        out.emitExpr(env)(t)
-        out.emit(" = ")
-        out.emitExpr(env)(v)
-        out.emit(";")
+      case View.VarGet(t)     => out.emitExpr(env)(t)
+      case View.VarSet(_, _)  => {
+        out.emit("({")
+        out.emitStmt(env)(term)
+        out.emit("})")
       }
 
       case View.ArrayNew(ty, t) => {
@@ -268,6 +270,17 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
       case View.ArrayLength(arr) => out.invalidTerm(
           s"C backend cannot emit array length without explicit length metadata: $arr"
         )
+
+      case View.StructGet(repr, t, field) => {
+        out.emitMaybeParenthesizedExpr(env)(t)
+        out.emit(s"->$field")
+      }
+
+      case View.StructSet(_, _, _) => {
+        out.emit("({")
+        out.emitStmt(env)(term)
+        out.emit("})")
+      }
 
       case View.RangeStart(t) => out
           .invalidTerm(s"C backend has no first-class range value: $t")
@@ -343,6 +356,20 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
         out.emitln(";")
       }
 
+      case View.VarSet(x, v) => {
+        out.emitExpr(env)(x)
+        out.emit(" = ")
+        out.emitExpr(env)(v)
+        out.emit(";")
+      }
+
+      case View.StructSet(x, field, v) => {
+        out.emitMaybeParenthesizedExpr(env)(x)
+        out.emit(s"->$field = ")
+        out.emitExpr(env)(v)
+        out.emit(";")
+      }
+
       case View.App(_, _) => {
         out.emitExpr(env)(term)
         out.emitln(";")
@@ -410,6 +437,7 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
       case BOOL       => out.emitln("return false;")
       case STRING     => out.emitln("return NULL;")
       case ARRAY(_)   => out.emitln("return NULL;")
+      case STRUCT(_)  => out.emitln("return NULL;")
     }
 
     private def emitLetExpr(env: Env)(x: Name, e1: Term, e2: Term): Unit = {

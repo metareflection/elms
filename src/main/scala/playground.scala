@@ -5,6 +5,7 @@ import scala.language.implicitConversions
 import elms.prelude.{_, given}
 import elms.core.Op.*
 import elms.core.tree as ast
+import elms.core.StructManifest
 import elms.pipeline.eqsat.*
 import elms.pipeline.simple
 import elms.pipeline.Propagate
@@ -12,6 +13,8 @@ import elms.runtime.Log
 import elms.util.Plumbing.*
 
 import Pattern.{Var => PVar, Node => PNode}
+
+case class Foo(x: Int, y: String) derives StructManifest
 
 @virtualize
 object Playground extends OptimizingSnippetDriver[Int, Int] with DslOps {
@@ -40,7 +43,7 @@ def main() = {
   val ack2 = specialize(2)
   println(ack2.code)
    */
-  println(Playground.code)
+  println(summon[StructManifest[Foo]].repr.name)
 }
 
 /*

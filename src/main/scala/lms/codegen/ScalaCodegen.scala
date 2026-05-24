@@ -178,6 +178,15 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
         out.emitTerm(arr)
         out.emit(".length")
       }
+      case View.StructGet(repr, t, field) => {
+        out.emitMaybeParenthesized(t)
+        out.emit(s".$field")
+      }
+      case View.StructSet(t, field, v) => {
+        out.emitMaybeParenthesized(t)
+        out.emit(".$field = ")
+        out.emitTerm(v)
+      }
       case E(_, _) => out.invalidTerm(s"Got invalid term: $term")
     }
 

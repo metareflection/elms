@@ -2,7 +2,7 @@ package elms.core.tree
 
 import scala.compiletime.constValue
 
-import elms.core.{Type, Typable, Primitive, Op, Name}
+import elms.core.{Type, Typable, Primitive, Op, Name, StructRepr}
 import elms.runtime.Log
 
 // CR-soon cwong: This design is nicer to program against than raw `ast.E` but
@@ -251,5 +251,36 @@ object View {
   object ArrayLength {
     def apply(t: Term): Term = E(Op.ArrayLength, Seq(t))
     def unapply(t: Term): Option[Term] = withArity[1](Op.ArrayLength, "ArrayLength", t)
+  }
+
+  object StructGet {
+    def apply(repr: StructRepr, t: Term, field: String): Term =
+      E(Op.StructGet(repr, field), Seq(t))
+    def unapply(t: Term): Option[(StructRepr, Term, String)] = t match {
+      case E(Op.StructGet(repr, field), s) => {
+        if s.length == 0 then {
+          errNone("StructGet")
+          return None
+        }
+        if s.length > 1 then { warnTooMany("StructGet") }
+        Some((repr, s(0), field))
+      }
+      case _ => None
+    }
+  }
+
+  object StructSet {
+    def apply(t: Term, field: String, v: Term): Term = E(Op.StructSet(field), Seq(t, v))
+    def unapply(t: Term): Option[(Term, String, Term)] = t match {
+      case E(Op.StructSet(field), s) => {
+        if s.length < 2 then {
+          errTooFew("StructSet")
+          return None
+        }
+        if s.length > 2 then { warnTooMany("StructSet") }
+        Some((s(0), field, s(1)))
+      }
+      case _ => None
+    }
   }
 }
