@@ -1,7 +1,7 @@
 package elms.pipeline
 
 import elms.core.{Name, Primitive}
-import elms.core.Givens.given
+import elms.core.given
 import elms.core.Op
 import elms.core.tree.*
 

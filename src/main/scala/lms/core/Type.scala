@@ -51,16 +51,14 @@ abstract class Typable[A] {
   val identity: Type
 }
 
-object Givens {
-  given Primitive[Unit] = UNIT
-  given Primitive[Int] = INT
-  given Primitive[Boolean] = BOOL
-  given Primitive[Char] = CHAR
-  given Primitive[String] = STRING
+given primUnit: Primitive[Unit] = UNIT
+given primInt: Primitive[Int] = INT
+given primBool: Primitive[Boolean] = BOOL
+given primChar: Primitive[Char] = CHAR
+given primString: Primitive[String] = STRING
 
-  given [A](using prim: Primitive[A]): Typable[A] with
-    val identity = prim
+given typPrim[A](using prim: Primitive[A]): Typable[A] with
+  val identity = prim
 
-  given [A](using inner: Typable[A]): Typable[Array[A]] with
-    val identity = ARRAY(inner.identity)
-}
+given typArray[A](using inner: Typable[A]): Typable[Array[A]] with
+  val identity = ARRAY(inner.identity)

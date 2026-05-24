@@ -2,7 +2,6 @@ package elms.core
 
 import elms.core.Op
 import elms.core.Name
-import elms.core.Givens.given
 
 trait RangeOps extends PrimitiveOps {
   extension (st: Rep[Int])

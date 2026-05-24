@@ -1,7 +1,6 @@
 package elms.prelude
 
-export elms.core.Givens.given
-export elms.core.static.given
+export elms.core.instances.given
 export elms.core.macros.virtualize
 export elms.core.Typable
 export elms.core.Base

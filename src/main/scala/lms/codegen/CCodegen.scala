@@ -5,7 +5,7 @@ import elms.core.Op.*
 import elms.core.Name
 import elms.core.tree as ast
 import elms.core.tree.View
-import elms.core.Givens.given
+import elms.core.given
 import elms.util.IndentedWriter
 import elms.util.collection.*
 import elms.runtime.Log
