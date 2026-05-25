@@ -181,6 +181,10 @@ object View {
     def apply(t1: Term, t2: Term) = E(Op.Or, Seq(t1, t2))
     def unapply(t: Term): Option[(Term, Term)] = withArity[2](Op.Or, "Or", t)
   }
+  object Not {
+    def apply(t: Term) = E(Op.Or, Seq(t))
+    def unapply(t: Term): Option[Term] = withArity[1](Op.Not, "Not", t)
+  }
 
   object Range {
     def apply(t1: Term, t2: Term) = E(Op.Range, Seq(t1, t2))

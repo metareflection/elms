@@ -68,6 +68,7 @@ object Propagate {
         case View.Or(t, View.Const[Boolean](true)) => View.mkConst(true)
         case View.Or(View.Const[Boolean](false), t) => t
         case View.Or(t, View.Const[Boolean](false)) => t
+        case View.Not(View.Const[Boolean](b)) => View.mkConst(!b)
         case View.IfThenElse(View.Const[Boolean](b), thent, elset) =>
           if b then thent else elset
         case _ => e

@@ -8,6 +8,7 @@ trait DslOps
     with PrimitiveOps
     with VarOps
     with BooleanOps
+    with EqualityOps
     with IntegerOps
     with RangeOps
     with StringOps

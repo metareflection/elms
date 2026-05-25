@@ -28,6 +28,7 @@ object Op {
   case object Le extends Pure
   case object Ge extends Pure
 
+  case object Not extends Pure
   case object And extends Pure
   case object Or extends Pure
 
