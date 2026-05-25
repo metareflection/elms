@@ -94,7 +94,7 @@ class virtualize extends MacroAnnotation {
         List(tLiftable)
       )
 
-      // unit[T](v)(using Liftable.of[T])
+      // unit[T](v)(using summonInline[this.Liftable.of[Unit]])
       val repv = Apply(Apply(TypeApply(unitf, List(ttree)), List(v)), List(tLiftableW))
 
       Block(body, repv)
