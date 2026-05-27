@@ -3,7 +3,7 @@ package elms.pipeline
 import elms.core.{Name, Primitive}
 import elms.core.given
 import elms.core.Op
-import elms.core.tree.*
+import elms.core.tree.untyped.*
 
 object Propagate {
   sealed trait Fact
@@ -26,8 +26,8 @@ object Propagate {
         case Some(FConst(c))    => E(c, Seq())
         case Some(FCopy(other)) => V(other)
       }
-    case Function(args, outty, body) =>
-      Function(args, outty, propagateImpl(body, facts))
+    case Function(arg, inty, outty, body) =>
+      Function(arg, inty, outty, propagateImpl(body, facts))
     case E(op, args) => {
       val e = E(op, args.map(propagateImpl(_, facts)))
       e match {

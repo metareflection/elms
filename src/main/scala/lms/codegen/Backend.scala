@@ -1,6 +1,6 @@
 package elms.codegen
 
-import elms.core.tree as ast
+import elms.core.tree.untyped as ast
 import elms.util.IndentedWriter
 
 abstract class Backend(cfg: Config) {

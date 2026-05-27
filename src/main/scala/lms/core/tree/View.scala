@@ -1,4 +1,4 @@
-package elms.core.tree
+package elms.core.tree.untyped
 
 import scala.compiletime.constValue
 
@@ -85,7 +85,7 @@ object View {
   // CR cwong: this sucks
   object Let {
     def unapply(t: Term): Option[(Name, Option[Type], Term, Term)] = t match {
-      case elms.core.tree.Let(x, me1, e2) => {
+      case elms.core.tree.untyped.Let(x, me1, e2) => {
         val (mty, e1) = me1 match {
           case VarNew(ty, e) => { (Some(ty), e) }
           case _             => (None, me1)

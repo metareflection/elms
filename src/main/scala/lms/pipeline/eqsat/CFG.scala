@@ -11,5 +11,5 @@ enum Stmt {
   case If(cond: EClass, thn: Stmt, els: Stmt)
   case RangeFor(v: Name, st: EClass, end: EClass, body: Stmt)
   case While(cond: Stmt, body: Stmt)
-  case Lambda(args: Seq[(Name, Type)], outty: Type, body: Stmt)
+  case Lambda(arg: Name, inty: Type, outty: Type, body: Stmt)
 }

@@ -3,8 +3,8 @@ package elms.codegen
 import elms.core.*
 import elms.core.Op.*
 import elms.core.Name
-import elms.core.tree as ast
-import elms.core.tree.View
+import elms.core.tree.untyped as ast
+import elms.core.tree.untyped.View
 import elms.util.IndentedWriter
 import elms.runtime.Log
 
@@ -17,9 +17,8 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
     prog.functions.foreach { (fname, fdef) => w.emitFunction(fname, fdef) }
   }
 
-  private def renderArgs(args: Seq[(Name, Type)]): String = args.map { (name, ty) =>
+  private def renderArgs(name: Name, ty: Type): String =
     s"${name.render(cfg.varPrefix)}: ${ty.render}"
-  }.mkString(",")
 
   extension [A: Primitive](x: A)
     def render: String = summon[Primitive[A]] match {
@@ -53,9 +52,9 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
     }
 
     private def emitFunction(fname: Name, fdef: Function): Unit = {
-      val Function(args, outty, body) = fdef
+      val Function(arg, inty, outty, body) = fdef
 
-      val argsS = renderArgs(args)
+      val argsS = renderArgs(arg, inty)
       val header = s"def ${fname.render(cfg.varPrefix)}($argsS): ${outty.render} = {"
       out.emitln(header)
       out.indented { out.emitTerm(body) }
@@ -82,9 +81,9 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
       }
       case Let(x, e1, e2) => Log
           .error("BUG: Got `Let` without matching `View.Let` (should be impossible)")
-      case Function(args, _outty, body) => {
+      case Function(arg, inty, _outty, body) => {
         out.emit("(")
-        out.emit(renderArgs(args))
+        out.emit(renderArgs(arg, inty))
         out.emitln(") => {")
         out.indented { out.emitTerm(body) }
         out.emitln("}")

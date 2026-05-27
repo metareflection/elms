@@ -5,7 +5,7 @@ import annotation.implicitNotFound
 trait Type derives CanEqual
 
 case class ARRAY(inner: Type) extends Type
-case class ARROW(args: Seq[Type], out: Type) extends Type
+case class ARROW(args: Type, out: Type) extends Type
 
 sealed trait Primitive[A] extends Type {
   def is[B](other: Primitive[B]): Option[A =:= B]

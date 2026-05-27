@@ -4,7 +4,7 @@ import scala.collection.mutable
 import scala.language.implicitConversions
 
 import elms.core, core.Op, core.Name
-import elms.core.tree as ast
+import elms.core.tree.untyped as ast
 import elms.runtime.Log
 import elms.util.Plumbing.*
 import elms.util.CountOrInf, CountOrInf.*

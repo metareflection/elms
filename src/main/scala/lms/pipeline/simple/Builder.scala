@@ -4,7 +4,7 @@ package elms.pipeline.simple
 
 import elms.core.{Type, Op, Name, StaticData}, Op._
 import elms.pipeline
-import elms.core.tree as ast
+import elms.core.tree.untyped as ast
 import elms.runtime.Log
 import elms.util.{Plumbing, Counter}
 
@@ -28,14 +28,15 @@ class Builder extends pipeline.Builder {
   override def fun(
       name: Name,
       top: Boolean,
-      args: Seq[(Name, Type)],
+      arg: Name,
+      inty: Type,
       outty: Type
   ): FunctionStub = {
     def fill(body: => Exp): Unit = {
       if top then stBlock = Nil
 
       val bodyexp = region(body)
-      val f = ast.Function(args, outty, bodyexp)
+      val f = ast.Function(arg, inty, outty, bodyexp)
 
       if top then roots ::= (name, f) else stBlock ::= (name, f)
     }

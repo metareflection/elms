@@ -1,4 +1,4 @@
-package elms.core.tree
+package elms.core.tree.untyped
 
 import elms.core.{Op, Type, Name, StaticData}
 import elms.util.Plumbing.*
@@ -9,8 +9,8 @@ case class E(op: Op, children: Seq[Term]) extends Term
 case class V(name: Name) extends Term
 case class Let(x: Name, e1: Term, e2: Term) extends Term
 
-case class Function(args: Seq[(Name, Type)], outty: Type, body: Term) extends Term {
-  def map(f: Term => Term): Function = Function(args, outty, f(body))
+case class Function(arg: Name, inty: Type, outty: Type, body: Term) extends Term {
+  def map(f: Term => Term): Function = Function(arg, inty, outty, f(body))
 }
 
 case class Program(functions: Seq[(Name, Function)], staticData: Seq[(Name, StaticData)])
@@ -20,7 +20,7 @@ object Term {
     case E(_, children) => 1 + children.map(size).sum
     case V(_) => 1
     case Let(_, e1, e2) => 1 + size(e1) + size(e2)
-    case Function(_, _, body) => 1 + size(body)
+    case Function(_, _, _, body) => 1 + size(body)
   }
 }
 

@@ -3,8 +3,8 @@ package elms.codegen
 import elms.core.*
 import elms.core.Op.*
 import elms.core.Name
-import elms.core.tree as ast
-import elms.core.tree.View
+import elms.core.tree.untyped as ast
+import elms.core.tree.untyped.View
 import elms.core.given
 import elms.util.IndentedWriter
 import elms.util.collection.*
@@ -30,9 +30,8 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
     prog.functions.foreach { (fname, fdef) => w.emitFunction(topEnv)(fname, fdef) }
   }
 
-  private def renderArgs(args: Seq[(Name, Type)]): String = args.map { (name, ty) =>
+  private def renderArgs(name: Name, ty: Type): String =
     s"${ty.renderParam} ${name.render(cfg.varPrefix)}"
-  }.mkString(", ")
 
   extension [A: Primitive](x: A)
     def render: String = summon[Primitive[A]] match {
@@ -145,13 +144,13 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
         case _                   => None
       }
 
-    case Function(args, outty, _) => Some(ARROW(args.map(_._2), outty))
+    case Function(arg, inty, outty, _) => Some(ARROW(inty, outty))
 
     case E(_, _) => None
   }
 
   private def functionType(fdef: Function): Type =
-    ARROW(fdef.args.map(_._2), fdef.outty)
+    ARROW(fdef.inty, fdef.outty)
 
   extension (out: IndentedWriter)
     private def invalidTerm(msg: String): Unit = {
@@ -162,10 +161,10 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
     }
 
     private def emitFunction(topEnv: Env)(fname: Name, fdef: Function): Unit = {
-      val Function(args, outty, body) = fdef
+      val Function(arg, inty, outty, body) = fdef
 
-      val env = args.toMap ++ topEnv
-      val argsS = renderArgs(args)
+      val env = topEnv + (arg -> inty)
+      val argsS = renderArgs(arg, inty)
 
       out.emitln(s"${outty.render} ${fname.render(cfg.varPrefix)}($argsS) {")
       out.indented {
@@ -304,7 +303,7 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
       case View.While(_, _) => out
           .invalidTerm(s"while-loop cannot be emitted as a C expression: $term")
 
-      case Function(_, _, _) => out
+      case Function(_, _, _, _) => out
           .invalidTerm(s"C backend does not support anonymous functions/lambdas: $term")
 
       case E(_, _) => out.invalidTerm(s"Got invalid expression term: $term")
@@ -381,7 +380,7 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
 
       case View.Const[Unit](const) => out.emitln(";")
 
-      case Function(_, _, _) => {
+      case Function(_, _, _, _) => {
         out
           .invalidTerm(s"C backend does not support anonymous functions/lambdas: $term")
         out.emitln(";")
@@ -421,7 +420,7 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
         out.emitReturnFallback(outty)
       }
 
-      case Function(_, _, _) => {
+      case Function(_, _, _, _) => {
         out
           .invalidTerm(s"C backend does not support anonymous functions/lambdas: $term")
         out.emitln(";")
@@ -502,7 +501,7 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
         out.emitln(";")
       }
 
-      case Function(_, _, _) => {
+      case Function(_, _, _, _) => {
         out
           .invalidTerm(s"C backend does not support anonymous functions/lambdas: $term")
         out.emitln(";")

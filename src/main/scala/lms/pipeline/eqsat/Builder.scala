@@ -3,7 +3,7 @@ package elms.pipeline.eqsat
 import scala.collection.mutable
 
 import elms.core.{Type, Op, Name}
-import elms.core.tree as ast
+import elms.core.tree.untyped as ast
 import elms.pipeline
 import elms.util.{Counter, SourceContext}
 import elms.util.Plumbing.*
@@ -123,10 +123,11 @@ private class FunctionBuilder(
   def lambda(
       name: Name,
       cls: EClass,
-      args: Seq[(Name, Type)],
+      arg: Name,
+      inty: Type,
       outty: Type,
       body: Builder.Handle
-  ): Unit = regions.push(name, cls, Lambda(args, outty, body.asStmt))
+  ): Unit = regions.push(name, cls, Lambda(arg, outty, inty, body.asStmt))
 
   def reflect(op: Op, children: Seq[Builder.Handle]): Builder.Handle = op match {
     case pure: Op.Pure     => reflectPure(pure, children.map(_.unwrap))
@@ -163,8 +164,9 @@ private class FunctionBuilder(
           case _ => throw LMSRuntimeException("BUG: RangeForEach invalid children")
         }
       case Op.While => children match {
-        case Seq(cond, body) => regions.push(name, cls, While(cond.asStmt, body.asStmt))
-      }
+          case Seq(cond, body) => regions
+              .push(name, cls, While(cond.asStmt, body.asStmt))
+        }
     }
     Local(cls)
   }
@@ -237,8 +239,8 @@ private class FunctionBuilder(
       val e = elab(els, cache.enter)
       (prefix, ast.E(Op.IfThenElse, Seq(c, t, e)))
     }
-    case Lambda(args, outty, body) =>
-      (Seq(), ast.Function(args, outty, elab(body, cache.enter)))
+    case Lambda(arg, inty, outty, body) =>
+      (Seq(), ast.Function(arg, inty, outty, elab(body, cache.enter)))
     case RangeFor(x, st, end, body) => {
       val (prefix1, stt) = elabCls(st, cache)
       val (prefix2, endt) = elabCls(end, cache)
@@ -250,10 +252,7 @@ private class FunctionBuilder(
     case While(cond, body) => {
       val guardt = elab(cond, cache)
       val bodyt = elab(body, cache.enter)
-      (
-        Seq(),
-        ast.E(Op.While, Seq(guardt, bodyt))
-      )
+      (Seq(), ast.E(Op.While, Seq(guardt, bodyt)))
     }
   }
 }
@@ -287,7 +286,7 @@ class Builder(cfg: Builder.Config) extends pipeline.Builder {
   private def ensureBuilder(msg: String): FunctionBuilder = current.peek
     .getOrElse { throw LMSRuntimeException(s"BUG: $msg") }
 
-  private def topfun(name: Name, args: Seq[(Name, Type)], outty: Type): FunctionStub = {
+  private def topfun(name: Name, arg: Name, inty: Type, outty: Type): FunctionStub = {
     def fill(body: => Exp): Unit = {
       val builder = FunctionBuilder(name, cfg.rules, cfg.cfg, predefs(), this.fresh)
       current.push(builder)
@@ -295,27 +294,24 @@ class Builder(cfg: Builder.Config) extends pipeline.Builder {
       builder.ret(tail)
       val result = builder.extract
       current.pop()
-      functions(name) = F(ast.Function(args, outty, result))
+      functions(name) = F(ast.Function(arg, inty, outty, result))
     }
     functions(name) = Stub
     current.foreach { _.register(name) }
     FunctionStub(Global(name), fill)
   }
 
-  private def lambda(name: Name, args: Seq[(Name, Type)], outty: Type): FunctionStub = {
+  private def lambda(name: Name, arg: Name, inty: Type, outty: Type): FunctionStub = {
     val builder = ensureBuilder("attempted to define lambda outside function")
     val cls = builder.symbol(name)
-    def fill(body: => Exp): Unit = builder.lambda(name, cls, args, outty, region(body))
+    def fill(body: => Exp): Unit = builder
+      .lambda(name, cls, arg, inty, outty, region(body))
 
     FunctionStub(Local(cls), fill)
   }
 
-  def fun(
-      name: Name,
-      top: Boolean,
-      args: Seq[(Name, Type)],
-      outty: Type
-  ): FunctionStub = if top then topfun(name, args, outty) else lambda(name, args, outty)
+  def fun(name: Name, top: Boolean, arg: Name, inty: Type, outty: Type): FunctionStub =
+    if top then topfun(name, arg, inty, outty) else lambda(name, arg, inty, outty)
 
   def reflect(op: Op, children: Seq[Exp]): Exp =
     ensureBuilder("attempted to `reflect` outside function").reflect(op, children)

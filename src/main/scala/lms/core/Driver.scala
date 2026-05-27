@@ -3,7 +3,7 @@ package elms.core
 import scala.collection.mutable
 
 import elms.core.{Op, Name}
-import elms.core.tree as ast
+import elms.core.tree.untyped as ast
 import elms.pipeline
 import elms.util.ClosureCompare
 
@@ -29,7 +29,7 @@ abstract class Driver extends Base with ClosureCompare {
         val argty = summon[Typable[A]].identity
         val outty = summon[Typable[B]].identity
 
-        val stub = builder.fun(name, top, Vector((argname, argty)), outty)
+        val stub = builder.fun(name, top, argname, argty, outty)
         funTable(key) = stub.symbol
 
         stub.fill { unsafeUnwrap(f(variable(argname))) }

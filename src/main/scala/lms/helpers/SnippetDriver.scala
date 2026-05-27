@@ -1,6 +1,7 @@
 package elms.helpers
 
-import elms.core.{Driver, Typable, tree as ast}
+import elms.core.{Driver, Typable}
+import elms.core.tree.untyped as ast
 import elms.pipeline, pipeline.simple
 import elms.pipeline.eqsat, eqsat.Rule
 import elms.pipeline.Propagate
