@@ -250,7 +250,7 @@ private class FunctionBuilder(
       )
     }
     case While(cond, body) => {
-      val guardt = elab(cond, cache)
+      val guardt = elab(cond, cache.enter)
       val bodyt = elab(body, cache.enter)
       (Seq(), ast.E(Op.While, Seq(guardt, bodyt)))
     }
