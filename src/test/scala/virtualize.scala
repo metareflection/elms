@@ -103,4 +103,22 @@ class VirtualizeTests extends SnapshotFunSuite {
     }
     check("var", Snippet.code)
   }
+
+  test("if effects") {
+    object Snippet extends SimpleSnippetDriver[Int, Int] with DslOps {
+      def snippet(x: Rep[Int]): Rep[Int] = {
+        val y = newVar(x)
+        val result = newVar(0)
+        if {
+          y := y.get + 2
+          y.get > 0
+        } then {
+          result := result.get + y.get
+        }
+
+        result.get
+      }
+    }
+    check("if-guard-effects", Snippet.code)
+  }
 }

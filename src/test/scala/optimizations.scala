@@ -22,6 +22,24 @@ class OptimizerTests extends SnapshotFunSuite {
   //
   // does not expose `x`.
 
+  test("if scope") {
+    object Snippet extends OptimizingSnippetDriver[Int, Int] with DslOps {
+      def snippet(x: Rep[Int]): Rep[Int] = {
+        val y = newVar(x)
+        val result = newVar(0)
+        if {
+          y := y.get + 2
+          y.get > 0
+        } then {
+          result := result.get + y.get
+        }
+
+        result.get
+      }
+    }
+    check("if-scope", Snippet.code)
+  }
+
   test("while scope") {
     object Snippet extends OptimizingSnippetDriver[Int, Int] with DslOps {
       def snippet(x: Rep[Int]): Rep[Int] = {

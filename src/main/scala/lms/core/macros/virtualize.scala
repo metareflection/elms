@@ -57,7 +57,7 @@ class virtualize extends MacroAnnotation {
       if widened.derivesFrom(marker) then
         widened.baseType(marker) match {
           case AppliedType(_, List(arg)) => Some(arg)
-          case _ => None
+          case _                         => None
         }
       else None
     }
@@ -102,9 +102,18 @@ class virtualize extends MacroAnnotation {
       Block(body, repv)
     }
 
+    def tryUnwrapImplicitBool(t: Term): Option[Term] = t match {
+      case Apply(conv, List(x)) => {
+        if conv.show.endsWith("__virtualizedBoolConvInternal.apply") then Some(x)
+        else None
+      }
+      case Block(stats, expr) => tryUnwrapImplicitBool(expr).map(Block(stats, _))
+      case _              => None
+    }
+
     object Visitor extends TreeMap {
       override def transformTerm(tree: Term)(owner: Symbol): Term = tree match {
-        case If(Apply(conv, List(x)), thenp, elsep) => {
+        case If(guard, thenp, elsep) => {
           val thist = makeThis(owner)
 
           val unitf = findMethods(owner, "unit") match {
@@ -113,10 +122,10 @@ class virtualize extends MacroAnnotation {
             case x :: _ => thist.select(x)
           }
 
-          val xt =
-            if (conv.show.endsWith("__virtualizedBoolConvInternal.apply")) {
-              this.transformTerm(x)(owner)
-            } else { return super.transformTerm(tree)(owner) }
+          val xt = tryUnwrapImplicitBool(guard).map(this.transformTerm(_)(owner)) match {
+            case Some(xt) => xt
+            case None     => return super.transformTerm(tree)(owner)
+          }
 
           val thent = ensureTrailingRep(this.transformTerm(thenp)(owner), thist, unitf)
           val elset = ensureTrailingRep(this.transformTerm(elsep)(owner), thist, unitf)
@@ -125,22 +134,21 @@ class virtualize extends MacroAnnotation {
 
           val trep = unRep(ttype) match {
             case Some(t) => t
-            case None    => report.errorAndAbort(
-                s"BUG: virtualized if/else body does not have trailing Rep type, instead has ${ttype
-                    .show}"
-              )
+            case None    => report
+                .errorAndAbort(s"BUG: virtualized if/else body has type ${ttype
+                    .show}, which is not a Rep")
           }
 
           Select.overloaded(thist, "__ifThenElse", List(trep), List(xt, thent, elset))
         }
 
-        case While(Apply(conv, List(x)), body) => {
+        case While(guard, body) => {
           val thist = makeThis(owner)
 
-          val xt =
-            if (conv.show.endsWith("__virtualizedBoolConvInternal.apply")) {
-              this.transformTerm(x)(owner)
-            } else { return super.transformTerm(tree)(owner) }
+          val xt = tryUnwrapImplicitBool(guard).map(this.transformTerm(_)(owner)) match {
+            case Some(xt) => xt
+            case None     => return super.transformTerm(tree)(owner)
+          }
 
           val unitf = findMethods(owner, "unit") match {
             case Nil => report
