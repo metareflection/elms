@@ -14,4 +14,7 @@ trait VarOps extends Base {
     def get: Rep[T] = varRead(rc)
     def set(v: Rep[T]): Rep[Unit] = varWrite(rc, v)
     infix def :=(v: Rep[T]): Rep[Unit] = rc.set(v)
+
+  given [T]: Conversion[Rep[Var[T]], Rep[T]] with
+    def apply(rc: Rep[Var[T]]): Rep[T] = rc.get
 }
