@@ -1,11 +1,9 @@
-package elms.test.tutorial
+package elms.test
 
 import scala.language.implicitConversions
 
 import elms.prelude.*
 import elms.prelude.given
-
-import elms.test.*
 
 @virtualize
 trait Ackermann extends DslOps {
@@ -15,7 +13,7 @@ trait Ackermann extends DslOps {
 }
 
 class AckermannTest extends SnapshotFunSuite {
-  val under = "tutorial/ack-"
+  val under = "ackermann/"
 
   def specialize(m: Int): DslDriver[Int,Int] = new DslDriver[Int,Int] with Ackermann {
     def snippet(n: Rep[Int]): Rep[Int] = a(m)(n)
