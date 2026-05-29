@@ -23,7 +23,7 @@ class OptimizerTests extends SnapshotFunSuite {
   // does not expose `x`.
 
   test("if scope") {
-    object Snippet extends OptimizingSnippetDriver[Int, Int] with DslOps {
+    object Snippet extends DslDriver[Int, Int] {
       def snippet(x: Rep[Int]): Rep[Int] = {
         val y = newVar(x)
         val result = newVar(0)
@@ -41,7 +41,7 @@ class OptimizerTests extends SnapshotFunSuite {
   }
 
   test("while scope") {
-    object Snippet extends OptimizingSnippetDriver[Int, Int] with DslOps {
+    object Snippet extends DslDriver[Int, Int] {
       def snippet(x: Rep[Int]): Rep[Int] = {
         val y = newVar(x)
         val result = newVar(0)
@@ -54,5 +54,24 @@ class OptimizerTests extends SnapshotFunSuite {
       }
     }
     check("while-scope", Snippet.code)
+  }
+
+  // Ensure that boolean operators respect short-circuiting
+
+  test("short-circuit") {
+    val snippet = new DslDriver[Boolean, Boolean] {
+      def foo(s: String, out: Boolean): Rep[Boolean] = {
+        Builtins.println(s)
+        unit(out)
+      }
+
+      def snippet(x: Rep[Boolean]): Rep[Boolean] = {
+        val nab = foo("a", false) && foo("b", true)
+        val anb = foo("a", true) || foo("b", false)
+
+        (x || nab) || (x && anb)
+      }
+    }
+    check("short-circuit", snippet.code)
   }
 }

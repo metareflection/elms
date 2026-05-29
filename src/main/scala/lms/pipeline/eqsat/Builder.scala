@@ -2,6 +2,7 @@ package elms.pipeline.eqsat
 
 import scala.collection.mutable
 
+import elms.core.given
 import elms.core.{Type, Op, Name}
 import elms.core.tree.untyped as ast
 import elms.pipeline
@@ -167,6 +168,18 @@ private class FunctionBuilder(
           case Seq(cond, body) => regions
               .push(name, cls, While(cond.asStmt, body.asStmt))
         }
+      case Op.And => children match {
+        case Seq(l, r) => {
+          val falset = graph.addNode(Op.Const(false), Seq())
+          regions.push(name, cls, If(l.unwrap, r.asStmt, Return(falset)))
+        }
+      }
+      case Op.Or => children match {
+        case Seq(l, r) => {
+          val truet = graph.addNode(Op.Const(true), Seq())
+          regions.push(name, cls, If(l.unwrap, Return(truet), r.asStmt))
+        }
+      }
     }
     Local(cls)
   }

@@ -29,8 +29,8 @@ object Op {
   case object Ge extends Pure
 
   case object Not extends Pure
-  case object And extends Pure
-  case object Or extends Pure
+  case object And extends Control
+  case object Or extends Control
 
   case object Range extends Pure
 

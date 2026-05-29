@@ -39,12 +39,6 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
       case ARRAY(t) => s"Array[${t.render}]"
     }
 
-  extension (t: Term)
-    private def isCompound: Boolean = t match {
-      case V(_) | E(_: Const[_], Nil) => false
-      case _                          => true
-    }
-
   extension (out: IndentedWriter)
     private def invalidTerm(msg: String): Unit = {
       Log.error(msg)
@@ -63,9 +57,14 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
     }
 
     private def emitMaybeParenthesized(t: Term): Unit = {
-      if t.isCompound then out.emit("(")
+      val (l, r) = t match {
+        case V(_) | E(_: Const[_], Nil) => ("", "")
+        case Let(_,_,_) => ("{", "}")
+        case _ => ("(", ")")
+      }
+      out.emit(l)
       out.emitTerm(t)
-      if t.isCompound then out.emit(")")
+      out.emit(r)
     }
 
     private def emitTerm(term: Term): Unit = term match {

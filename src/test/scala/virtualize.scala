@@ -176,4 +176,21 @@ class VirtualizeTests extends SnapshotFunSuite {
     }
     check("range2", snippet.code)
   }
+
+  test("short-circuit") {
+    val snippet = new SimpleSnippetDriver[Unit, Boolean] with DslOps {
+      def foo(s: String, out: Boolean): Rep[Boolean] = {
+        Builtins.println(s)
+        unit(out)
+      }
+
+      def snippet(_x: Rep[Unit]): Rep[Boolean] = {
+        val nab = foo("a", false) && foo("b", true)
+        val anb = foo("a", true) || foo("b", false)
+
+        nab && anb
+      }
+    }
+    check("short-circuit", snippet.code)
+  }
 }

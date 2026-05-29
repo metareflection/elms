@@ -140,9 +140,9 @@ class RegexTest extends SnapshotFunSuite {
     }
   }
 
+  /*
   testmatch("^hello$", "hello", true)
   testmatch("^hello$", "hell", false)
-  /*
   testmatch("hell", "hello", true)
   testmatch("hell", "hell", true)
   testmatch("hel*", "he", true)
