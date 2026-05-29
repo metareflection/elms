@@ -42,9 +42,10 @@ class virtualize extends MacroAnnotation {
       val liftable = TypeSelect(thist, "Liftable")
       val unitTyp = Applied(liftable, List(TypeTree.of[Unit]))
 
-      val unitW = Implicits.search(unitTyp.tpe) match {
-        case success: ImplicitSearchSuccess => success.tree
-      }
+      val unitW = TypeApply(
+        Select.unique(Ref(Symbol.requiredModule("scala.compiletime")), "summonInline"),
+        List(unitTyp)
+      )
 
       // unit[Unit](())(using Typ.of[Unit])
       Apply(Apply(TypeApply(unitf, List(TypeTree.of[Unit])), List(x)), List(unitW))
@@ -88,13 +89,10 @@ class virtualize extends MacroAnnotation {
 
       val ttree = TypeTree.of(using inferredTyp.asType)
       val tLiftable = Applied(TypeSelect(thist, "Liftable"), List(TypeTree.of[Unit]))
-
-      val tLiftableW = Implicits.search(tLiftable.tpe) match {
-        case success: ImplicitSearchSuccess => success.tree
-        case failure: ImplicitSearchFailure => report.errorAndAbort(
-            "couldn't construct type manifest for type " + tLiftable.show
-          )
-      }
+      val tLiftableW = TypeApply(
+        Select.unique(Ref(Symbol.requiredModule("scala.compiletime")), "summonInline"),
+        List(tLiftable)
+      )
 
       // unit[T](v)(using Liftable.of[T])
       val repv = Apply(Apply(TypeApply(unitf, List(ttree)), List(v)), List(tLiftableW))
@@ -108,7 +106,7 @@ class virtualize extends MacroAnnotation {
         else None
       }
       case Block(stats, expr) => tryUnwrapImplicitBool(expr).map(Block(stats, _))
-      case _              => None
+      case _                  => None
     }
 
     object Visitor extends TreeMap {
@@ -122,10 +120,11 @@ class virtualize extends MacroAnnotation {
             case x :: _ => thist.select(x)
           }
 
-          val xt = tryUnwrapImplicitBool(guard).map(this.transformTerm(_)(owner)) match {
-            case Some(xt) => xt
-            case None     => return super.transformTerm(tree)(owner)
-          }
+          val xt =
+            tryUnwrapImplicitBool(guard).map(this.transformTerm(_)(owner)) match {
+              case Some(xt) => xt
+              case None     => return super.transformTerm(tree)(owner)
+            }
 
           val thent = ensureTrailingRep(this.transformTerm(thenp)(owner), thist, unitf)
           val elset = ensureTrailingRep(this.transformTerm(elsep)(owner), thist, unitf)
@@ -145,10 +144,11 @@ class virtualize extends MacroAnnotation {
         case While(guard, body) => {
           val thist = makeThis(owner)
 
-          val xt = tryUnwrapImplicitBool(guard).map(this.transformTerm(_)(owner)) match {
-            case Some(xt) => xt
-            case None     => return super.transformTerm(tree)(owner)
-          }
+          val xt =
+            tryUnwrapImplicitBool(guard).map(this.transformTerm(_)(owner)) match {
+              case Some(xt) => xt
+              case None     => return super.transformTerm(tree)(owner)
+            }
 
           val unitf = findMethods(owner, "unit") match {
             case Nil => report
