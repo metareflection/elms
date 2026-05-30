@@ -33,16 +33,16 @@ object Propagate {
       e match {
         case View.Negate(View.Const[Int](x))                    => View.mkConst(-x)
         case View.Plus(View.Const[Int](x), View.Const[Int](y))  => View.mkConst(x + y)
-        case View.Plus(t, View.Const[Int](0))  => t
-        case View.Plus(View.Const[Int](0), t)  => t
+        case View.Plus(t, View.Const[Int](0))                   => t
+        case View.Plus(View.Const[Int](0), t)                   => t
         case View.Minus(View.Const[Int](x), View.Const[Int](y)) => View.mkConst(x - y)
-        case View.Minus(t, View.Const[Int](0)) => t
-        case View.Minus(View.Const[Int](0), t) => View.Negate(t)
+        case View.Minus(t, View.Const[Int](0))                  => t
+        case View.Minus(View.Const[Int](0), t)                  => View.Negate(t)
         case View.Times(View.Const[Int](x), View.Const[Int](y)) => View.mkConst(x * y)
-        case View.Times(t, View.Const[Int](1)) => t
-        case View.Times(View.Const[Int](1), t) => t
-        case View.Times(t, View.Const[Int](0)) => View.mkConst(0)
-        case View.Times(View.Const[Int](0), t) => View.mkConst(0)
+        case View.Times(t, View.Const[Int](1))                  => t
+        case View.Times(View.Const[Int](1), t)                  => t
+        case View.Times(t, View.Const[Int](0))                  => View.mkConst(0)
+        case View.Times(View.Const[Int](0), t)                  => View.mkConst(0)
         case View.Equals(View.Const[Unit](x), View.Const[Unit](y)) => View
             .mkConst(x == y)
         case View.Equals(View.Const[Int](x), View.Const[Int](y)) => View.mkConst(x == y)
@@ -60,17 +60,34 @@ object Propagate {
             .mkConst(x && y)
         case View.And(View.Const[Boolean](false), t) => View.mkConst(false)
         case View.And(t, View.Const[Boolean](false)) => View.mkConst(false)
-        case View.And(View.Const[Boolean](true), t) => t
-        case View.And(t, View.Const[Boolean](true)) => t
+        case View.And(View.Const[Boolean](true), t)  => t
+        case View.And(t, View.Const[Boolean](true))  => t
         case View.Or(View.Const[Boolean](x), View.Const[Boolean](y)) => View
             .mkConst(x || y)
-        case View.Or(View.Const[Boolean](true), t) => View.mkConst(true)
-        case View.Or(t, View.Const[Boolean](true)) => View.mkConst(true)
-        case View.Or(View.Const[Boolean](false), t) => t
-        case View.Or(t, View.Const[Boolean](false)) => t
-        case View.Not(View.Const[Boolean](b)) => View.mkConst(!b)
+        case View.Or(View.Const[Boolean](true), t)                 => View.mkConst(true)
+        case View.Or(t, View.Const[Boolean](true))                 => View.mkConst(true)
+        case View.Or(View.Const[Boolean](false), t)                => t
+        case View.Or(t, View.Const[Boolean](false))                => t
+        case View.Not(View.Const[Boolean](b))                      => View.mkConst(!b)
         case View.IfThenElse(View.Const[Boolean](b), thent, elset) =>
           if b then thent else elset
+        case View.StringLength(View.Const[String](s)) => View.mkConst(s.length)
+        case View.StringCharAt(View.Const[String](s), View.Const[Int](i)) => s.lift(i)
+            .map(View.mkConst).getOrElse(e)
+        case View.StringTake(View.Const[String](s), View.Const[Int](i)) => View
+            .mkConst(s.take(i))
+        case View.StringDrop(View.Const[String](s), View.Const[Int](i)) => View
+            .mkConst(s.drop(i))
+        case View
+              .StringStartsWith(View.Const[String](s), View.Const[String](haystack)) =>
+          View.mkConst(s.startsWith(haystack))
+        case View.StringEndsWith(View.Const[String](s), View.Const[String](haystack)) =>
+          View.mkConst(s.endsWith(haystack))
+        case View.StringSubstring(
+              View.Const[String](s),
+              View.Const[Int](st),
+              View.Const[Int](end)
+            ) => View.mkConst(s.slice(st, end))
         case _ => e
       }
     }

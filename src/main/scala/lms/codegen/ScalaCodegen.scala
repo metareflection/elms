@@ -212,21 +212,21 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
         out.emitMaybeParenthesized(prefix)
         out.emit(")")
       }
-      case View.StringCharAt(s, i) => {
-        out.emitMaybeParenthesized(s)
-        out.emit(".charAt(")
-        out.emitMaybeParenthesized(i)
-        out.emit(")")
-      }
       case View.StringEndsWith(s, suffix) => {
         out.emitMaybeParenthesized(s)
         out.emit(".endsWith(")
         out.emitMaybeParenthesized(suffix)
         out.emit(")")
       }
+      case View.StringCharAt(s, i) => {
+        out.emitMaybeParenthesized(s)
+        out.emit(".charAt(")
+        out.emitMaybeParenthesized(i)
+        out.emit(")")
+      }
       case View.StringSubstring(s, start, end) => {
         out.emitMaybeParenthesized(s)
-        out.emit(".substring(")
+        out.emit(".slice(")
         out.emitMaybeParenthesized(start)
         out.emit(", ")
         out.emitMaybeParenthesized(end)

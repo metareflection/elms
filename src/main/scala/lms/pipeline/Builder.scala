@@ -11,7 +11,7 @@ abstract class Builder {
 
   private val counter = Counter()
 
-  protected val staticData = scala.collection.mutable.Map[Name, StaticData]()
+  val staticData = scala.collection.mutable.Map[Name, StaticData]()
 
   def name(s: String): Name = Name.from(s)
   def fresh(): Name = Name.from(counter.tick())
