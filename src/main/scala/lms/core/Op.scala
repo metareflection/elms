@@ -32,8 +32,15 @@ object Op {
   case object And extends Control
   case object Or extends Control
 
-  case object Range extends Pure
+  case object StringLength extends Pure
+  case object StringTake extends Pure
+  case object StringDrop extends Pure
+  case object StringStartsWith extends Pure
+  case object StringCharAt extends Pure
+  case object StringEndsWith extends Pure
+  case object StringSubstring extends Pure
 
+  case object Range extends Pure
   case class RangeForEach(x: Name) extends Control
   case object RangeStart extends Pure
   case object RangeEnd extends Pure

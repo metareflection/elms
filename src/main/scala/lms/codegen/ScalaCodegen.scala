@@ -164,21 +164,63 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
         out.emit(")")
       }
       case View.ArrayGet(arr, i) => {
-        out.emitTerm(arr)
+        out.emitMaybeParenthesized(arr)
         out.emit("(")
         out.emitTerm(i)
         out.emit(")")
       }
       case View.ArraySet(arr, i, x) => {
-        out.emitTerm(arr)
+        out.emitMaybeParenthesized(arr)
         out.emit("(")
         out.emitTerm(i)
         out.emit(") = ")
         out.emitTerm(x)
       }
       case View.ArrayLength(arr) => {
-        out.emitTerm(arr)
+        out.emitMaybeParenthesized(arr)
         out.emit(".length")
+      }
+      case View.StringLength(s) => {
+        out.emitMaybeParenthesized(s)
+        out.emit(".length")
+      }
+      case View.StringTake(s, n) => {
+        out.emitMaybeParenthesized(s)
+        out.emit(".take(")
+        out.emitMaybeParenthesized(n)
+        out.emit(")")
+      }
+      case View.StringDrop(s, n) => {
+        out.emitMaybeParenthesized(s)
+        out.emit(".drop(")
+        out.emitMaybeParenthesized(n)
+        out.emit(")")
+      }
+      case View.StringStartsWith(s, prefix) => {
+        out.emitMaybeParenthesized(s)
+        out.emit(".startsWith(")
+        out.emitMaybeParenthesized(prefix)
+        out.emit(")")
+      }
+      case View.StringCharAt(s, i) => {
+        out.emitMaybeParenthesized(s)
+        out.emit(".charAt(")
+        out.emitMaybeParenthesized(i)
+        out.emit(")")
+      }
+      case View.StringEndsWith(s, suffix) => {
+        out.emitMaybeParenthesized(s)
+        out.emit(".endsWith(")
+        out.emitMaybeParenthesized(suffix)
+        out.emit(")")
+      }
+      case View.StringSubstring(s, start, end) => {
+        out.emitMaybeParenthesized(s)
+        out.emit(".substring(")
+        out.emitMaybeParenthesized(start)
+        out.emit(", ")
+        out.emitMaybeParenthesized(end)
+        out.emit(")")
       }
       case View.StructGet(repr, t, field) => {
         out.emitMaybeParenthesized(t)

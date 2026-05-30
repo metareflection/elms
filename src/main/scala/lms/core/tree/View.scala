@@ -257,6 +257,50 @@ object View {
     def unapply(t: Term): Option[Term] = withArity[1](Op.ArrayLength, "ArrayLength", t)
   }
 
+  object StringLength {
+    def apply(t: Term): Term = E(Op.StringLength, Seq(t))
+    def unapply(t: Term): Option[Term] =
+      withArity[1](Op.StringLength, "StringLength", t)
+  }
+
+  object StringTake {
+    def apply(t1: Term, t2: Term): Term = E(Op.StringTake, Seq(t1, t2))
+    def unapply(t: Term): Option[(Term, Term)] =
+      withArity[2](Op.StringTake, "StringTake", t)
+  }
+
+  object StringDrop {
+    def apply(t1: Term, t2: Term): Term = E(Op.StringDrop, Seq(t1, t2))
+    def unapply(t: Term): Option[(Term, Term)] =
+      withArity[2](Op.StringDrop, "StringDrop", t)
+  }
+
+  object StringStartsWith {
+    def apply(t1: Term, t2: Term): Term = E(Op.StringStartsWith, Seq(t1, t2))
+    def unapply(t: Term): Option[(Term, Term)] =
+      withArity[2](Op.StringStartsWith, "StringStartsWith", t)
+  }
+
+  object StringCharAt {
+    def apply(t1: Term, t2: Term): Term = E(Op.StringCharAt, Seq(t1, t2))
+    def unapply(t: Term): Option[(Term, Term)] =
+      withArity[2](Op.StringCharAt, "StringCharAt", t)
+  }
+
+  object StringEndsWith {
+    def apply(t1: Term, t2: Term): Term = E(Op.StringEndsWith, Seq(t1, t2))
+    def unapply(t: Term): Option[(Term, Term)] =
+      withArity[2](Op.StringEndsWith, "StringEndsWith", t)
+  }
+
+  object StringSubstring {
+    def apply(t1: Term, t2: Term, t3: Term): Term =
+      E(Op.StringSubstring, Seq(t1, t2, t3))
+
+    def unapply(t: Term): Option[(Term, Term, Term)] =
+      withArity[3](Op.StringSubstring, "StringSubstring", t)
+  }
+
   object StructGet {
     def apply(repr: StructRepr, t: Term, field: String): Term =
       E(Op.StructGet(repr, field), Seq(t))
