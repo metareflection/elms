@@ -67,6 +67,16 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
       out.emit(r)
     }
 
+    private def emitAsExpr(t: Term): Unit = {
+      val (l, r) = t match {
+        case Let(_,_,_) => ("{", "}")
+        case _ => ("", "")
+      }
+      out.emit(l)
+      out.emitTerm(t)
+      out.emit(r)
+    }
+
     private def emitTerm(term: Term): Unit = term match {
       case V(name)                    => out.emit(name.render(cfg.varPrefix))
       case View.Let(x, mutTy, e1, e2) => {
@@ -74,7 +84,7 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
           case Some(ty) => out.emit(s"var ${x.render(cfg.varPrefix)}: ${ty.render} = ")
           case None     => out.emit(s"val ${x.render(cfg.varPrefix)} = ")
         }
-        out.emitTerm(e1)
+        out.emitAsExpr(e1)
         out.emitln("")
         out.emitTerm(e2)
       }

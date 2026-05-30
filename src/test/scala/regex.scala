@@ -135,14 +135,13 @@ class RegexTest extends SnapshotFunSuite {
   def testmatch(regexp: String, text: String, expected: Boolean) = {
     test(s"""matchsearch("$regexp", "$text") == $expected""") {
       val snippet = getOrBuild(regexp)
-      //check(sanitize(regexp), snippet.code)
+      check(sanitize(regexp), snippet.code)
       assertResult(expected) { snippet.eval(classOf[String], text) }
     }
   }
 
   testmatch("^hello$", "hello", true)
   testmatch("^hello$", "hell", false)
-  /*
   testmatch("hell", "hello", true)
   testmatch("hell", "hell", true)
   testmatch("hel*", "he", true)
@@ -156,5 +155,4 @@ class RegexTest extends SnapshotFunSuite {
   testmatch("^ab*", "ac", true)
   testmatch("^ab*", "bac", false)
   testmatch("^ab*$", "ac", false)
-  */
 }
