@@ -77,8 +77,8 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
       out.emit(r)
     }
 
-    private def emitTerm(term: Term): Unit = term match {
-      case V(name)                    => out.emit(name.render(cfg.varPrefix))
+    private def emitTerm(term: Term): Unit = ast.view(term).map({
+      case View.V(name)                    => out.emit(name.render(cfg.varPrefix))
       case View.Let(x, mutTy, e1, e2) => {
         mutTy match {
           case Some(ty) => out.emit(s"var ${x.render(cfg.varPrefix)}: ${ty.render} = ")
@@ -88,19 +88,18 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
         out.emitln("")
         out.emitTerm(e2)
       }
-      case Let(x, e1, e2) => Log
-          .error("BUG: Got `Let` without matching `View.Let` (should be impossible)")
-      case Function(arg, inty, _outty, body) => {
+      case View.Function(arg, inty, _outty, body) => {
         out.emit("(")
         out.emit(renderArgs(arg, inty))
         out.emitln(") => {")
         out.indented { out.emitTerm(body) }
         out.emitln("}")
       }
-      case View.Const(const) => out.emit(const.value.render(using const.prim))
+      case const@View.Const(_) => out.emit(const.value.render(using const.prim))
 
       // CR-soon cwong: This is likely subtly broken in the case that the `Var`
       // under inspection comes from something like a `Rep[Array[Var[T]]]`.
+      case View.VarNew(ty, v) => ???
       case View.VarGet(x)    => out.emitTerm(x)
       case View.VarSet(x, v) => {
         out.emitTerm(x)
@@ -241,8 +240,7 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
         out.emit(".$field = ")
         out.emitTerm(v)
       }
-      case E(_, _) => out.invalidTerm(s"Got invalid term: $term")
-    }
+    })
 
     private def emitArgTerms(args: Seq[Term]): Unit = {
       out.emit("(")

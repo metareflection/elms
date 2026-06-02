@@ -4,6 +4,7 @@ import elms.core.{Name, Primitive}
 import elms.core.given
 import elms.core.Op
 import elms.core.tree.*
+import elms.core.tree.View.Extractors as Ext
 
 object Propagate {
   sealed trait Fact
@@ -31,63 +32,63 @@ object Propagate {
     case E(op, args) => {
       val e = E(op, args.map(propagateImpl(_, facts)))
       e match {
-        case View.Negate(View.Const[Int](x))                    => View.mkConst(-x)
-        case View.Plus(View.Const[Int](x), View.Const[Int](y))  => View.mkConst(x + y)
-        case View.Plus(t, View.Const[Int](0))                   => t
-        case View.Plus(View.Const[Int](0), t)                   => t
-        case View.Minus(View.Const[Int](x), View.Const[Int](y)) => View.mkConst(x - y)
-        case View.Minus(t, View.Const[Int](0))                  => t
-        case View.Minus(View.Const[Int](0), t)                  => View.Negate(t)
-        case View.Times(View.Const[Int](x), View.Const[Int](y)) => View.mkConst(x * y)
-        case View.Times(t, View.Const[Int](1))                  => t
-        case View.Times(View.Const[Int](1), t)                  => t
-        case View.Times(t, View.Const[Int](0))                  => View.mkConst(0)
-        case View.Times(View.Const[Int](0), t)                  => View.mkConst(0)
-        case View.Equals(View.Const[Unit](x), View.Const[Unit](y)) => View
+        case Ext.Negate(Ext.Const[Int](x))                    => Ext.mkConst(-x)
+        case Ext.Plus(Ext.Const[Int](x), Ext.Const[Int](y))  => Ext.mkConst(x + y)
+        case Ext.Plus(t, Ext.Const[Int](0))                   => t
+        case Ext.Plus(Ext.Const[Int](0), t)                   => t
+        case Ext.Minus(Ext.Const[Int](x), Ext.Const[Int](y)) => Ext.mkConst(x - y)
+        case Ext.Minus(t, Ext.Const[Int](0))                  => t
+        case Ext.Minus(Ext.Const[Int](0), t)                  => Ext.Negate(t)
+        case Ext.Times(Ext.Const[Int](x), Ext.Const[Int](y)) => Ext.mkConst(x * y)
+        case Ext.Times(t, Ext.Const[Int](1))                  => t
+        case Ext.Times(Ext.Const[Int](1), t)                  => t
+        case Ext.Times(t, Ext.Const[Int](0))                  => Ext.mkConst(0)
+        case Ext.Times(Ext.Const[Int](0), t)                  => Ext.mkConst(0)
+        case Ext.Equals(Ext.Const[Unit](x), Ext.Const[Unit](y)) => Ext
             .mkConst(x == y)
-        case View.Equals(View.Const[Int](x), View.Const[Int](y)) => View.mkConst(x == y)
-        case View.Equals(View.Const[Boolean](x), View.Const[Boolean](y)) => View
+        case Ext.Equals(Ext.Const[Int](x), Ext.Const[Int](y)) => Ext.mkConst(x == y)
+        case Ext.Equals(Ext.Const[Boolean](x), Ext.Const[Boolean](y)) => Ext
             .mkConst(x == y)
-        case View.Equals(View.Const[Char](x), View.Const[Char](y)) => View
+        case Ext.Equals(Ext.Const[Char](x), Ext.Const[Char](y)) => Ext
             .mkConst(x == y)
-        case View.Equals(View.Const[String](x), View.Const[String](y)) => View
+        case Ext.Equals(Ext.Const[String](x), Ext.Const[String](y)) => Ext
             .mkConst(x == y)
-        case View.Lt(View.Const[Int](x), View.Const[Int](y)) => View.mkConst(x < y)
-        case View.Gt(View.Const[Int](x), View.Const[Int](y)) => View.mkConst(x > y)
-        case View.Le(View.Const[Int](x), View.Const[Int](y)) => View.mkConst(x <= y)
-        case View.Ge(View.Const[Int](x), View.Const[Int](y)) => View.mkConst(x >= y)
-        case View.And(View.Const[Boolean](x), View.Const[Boolean](y)) => View
+        case Ext.Lt(Ext.Const[Int](x), Ext.Const[Int](y)) => Ext.mkConst(x < y)
+        case Ext.Gt(Ext.Const[Int](x), Ext.Const[Int](y)) => Ext.mkConst(x > y)
+        case Ext.Le(Ext.Const[Int](x), Ext.Const[Int](y)) => Ext.mkConst(x <= y)
+        case Ext.Ge(Ext.Const[Int](x), Ext.Const[Int](y)) => Ext.mkConst(x >= y)
+        case Ext.And(Ext.Const[Boolean](x), Ext.Const[Boolean](y)) => Ext
             .mkConst(x && y)
-        case View.And(View.Const[Boolean](false), t) => View.mkConst(false)
-        case View.And(t, View.Const[Boolean](false)) => View.mkConst(false)
-        case View.And(View.Const[Boolean](true), t)  => t
-        case View.And(t, View.Const[Boolean](true))  => t
-        case View.Or(View.Const[Boolean](x), View.Const[Boolean](y)) => View
+        case Ext.And(Ext.Const[Boolean](false), t) => Ext.mkConst(false)
+        case Ext.And(t, Ext.Const[Boolean](false)) => Ext.mkConst(false)
+        case Ext.And(Ext.Const[Boolean](true), t)  => t
+        case Ext.And(t, Ext.Const[Boolean](true))  => t
+        case Ext.Or(Ext.Const[Boolean](x), Ext.Const[Boolean](y)) => Ext
             .mkConst(x || y)
-        case View.Or(View.Const[Boolean](true), t)                 => View.mkConst(true)
-        case View.Or(t, View.Const[Boolean](true))                 => View.mkConst(true)
-        case View.Or(View.Const[Boolean](false), t)                => t
-        case View.Or(t, View.Const[Boolean](false))                => t
-        case View.Not(View.Const[Boolean](b))                      => View.mkConst(!b)
-        case View.IfThenElse(View.Const[Boolean](b), thent, elset) =>
+        case Ext.Or(Ext.Const[Boolean](true), t)                 => Ext.mkConst(true)
+        case Ext.Or(t, Ext.Const[Boolean](true))                 => Ext.mkConst(true)
+        case Ext.Or(Ext.Const[Boolean](false), t)                => t
+        case Ext.Or(t, Ext.Const[Boolean](false))                => t
+        case Ext.Not(Ext.Const[Boolean](b))                      => Ext.mkConst(!b)
+        case Ext.IfThenElse(Ext.Const[Boolean](b), thent, elset) =>
           if b then thent else elset
-        case View.StringLength(View.Const[String](s)) => View.mkConst(s.length)
-        case View.StringCharAt(View.Const[String](s), View.Const[Int](i)) => s.lift(i)
-            .map(View.mkConst).getOrElse(e)
-        case View.StringTake(View.Const[String](s), View.Const[Int](i)) => View
+        case Ext.StringLength(Ext.Const[String](s)) => Ext.mkConst(s.length)
+        case Ext.StringCharAt(Ext.Const[String](s), Ext.Const[Int](i)) => s.lift(i)
+            .map(Ext.mkConst).getOrElse(e)
+        case Ext.StringTake(Ext.Const[String](s), Ext.Const[Int](i)) => Ext
             .mkConst(s.take(i))
-        case View.StringDrop(View.Const[String](s), View.Const[Int](i)) => View
+        case Ext.StringDrop(Ext.Const[String](s), Ext.Const[Int](i)) => Ext
             .mkConst(s.drop(i))
-        case View
-              .StringStartsWith(View.Const[String](s), View.Const[String](haystack)) =>
-          View.mkConst(s.startsWith(haystack))
-        case View.StringEndsWith(View.Const[String](s), View.Const[String](haystack)) =>
-          View.mkConst(s.endsWith(haystack))
-        case View.StringSubstring(
-              View.Const[String](s),
-              View.Const[Int](st),
-              View.Const[Int](end)
-            ) => View.mkConst(s.slice(st, end))
+        case Ext
+              .StringStartsWith(Ext.Const[String](s), Ext.Const[String](haystack)) =>
+          Ext.mkConst(s.startsWith(haystack))
+        case Ext.StringEndsWith(Ext.Const[String](s), Ext.Const[String](haystack)) =>
+          Ext.mkConst(s.endsWith(haystack))
+        case Ext.StringSubstring(
+              Ext.Const[String](s),
+              Ext.Const[Int](st),
+              Ext.Const[Int](end)
+            ) => Ext.mkConst(s.slice(st, end))
         case _ => e
       }
     }
