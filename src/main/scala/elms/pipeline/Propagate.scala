@@ -3,7 +3,7 @@ package elms.pipeline
 import elms.core.{Name, Primitive}
 import elms.core.given
 import elms.core.Op
-import elms.core.tree.untyped.*
+import elms.core.tree.*
 
 object Propagate {
   sealed trait Fact

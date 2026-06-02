@@ -3,8 +3,8 @@ package elms.codegen
 import elms.core.*
 import elms.core.Op.*
 import elms.core.Name
-import elms.core.tree.untyped as ast
-import elms.core.tree.untyped.View
+import elms.core.tree as ast
+import elms.core.tree.View
 import elms.core.given
 import elms.util.IndentedWriter
 import elms.util.collection.*

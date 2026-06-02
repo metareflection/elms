@@ -3,7 +3,7 @@ package elms.core
 import scala.collection.mutable
 
 import elms.core.{Op, Name}
-import elms.core.tree.untyped as ast
+import elms.core.tree as ast
 import elms.pipeline
 import elms.util.ClosureCompare
 

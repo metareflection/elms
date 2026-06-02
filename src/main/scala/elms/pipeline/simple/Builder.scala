@@ -4,7 +4,7 @@ package elms.pipeline.simple
 
 import elms.core.{Type, Op, Name, StaticData}, Op._
 import elms.pipeline
-import elms.core.tree.untyped as ast
+import elms.core.tree as ast
 import elms.runtime.Log
 import elms.util.{Plumbing, Counter}
 

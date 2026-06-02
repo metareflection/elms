@@ -4,7 +4,7 @@ import scala.collection.mutable
 
 import elms.core.given
 import elms.core.{Type, Op, Name}
-import elms.core.tree.untyped as ast
+import elms.core.tree as ast
 import elms.pipeline
 import elms.util.{Counter, SourceContext}
 import elms.util.Plumbing.*

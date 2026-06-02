@@ -1,7 +1,7 @@
 package elms.pipeline
 
 import elms.core.{Type, Op, Name, StaticData}
-import elms.core.tree.untyped.Program
+import elms.core.tree.Program
 import elms.util.Counter
 
 abstract class Builder {

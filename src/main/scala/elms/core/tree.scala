@@ -1,4 +1,4 @@
-package elms.core.tree.untyped
+package elms.core.tree
 
 import elms.core.{Op, Type, Name, StaticData}
 import elms.util.Plumbing.*

@@ -4,7 +4,7 @@ import scala.language.implicitConversions
 
 import elms.prelude.{_, given}
 import elms.core.Op.*
-import elms.core.tree.untyped as ast
+import elms.core.tree as ast
 import elms.core.StructManifest
 import elms.pipeline.eqsat.*
 import elms.pipeline.simple
