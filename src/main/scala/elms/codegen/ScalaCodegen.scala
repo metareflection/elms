@@ -96,6 +96,11 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
         out.emitln("}")
       }
       case const@View.Const(_) => out.emit(const.value.render(using const.prim))
+      case View.Custom(name, _ty, args) => {
+        out.emit(name)
+        out.emitArgTerms(args)
+        out.emit("")
+      }
 
       // CR-soon cwong: This is likely subtly broken in the case that the `Var`
       // under inspection comes from something like a `Rep[Array[Var[T]]]`.

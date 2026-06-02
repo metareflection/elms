@@ -193,4 +193,15 @@ class VirtualizeTests extends SnapshotFunSuite {
     }
     check("short-circuit", snippet.code)
   }
+
+  test("custom nodes") {
+    val snippet = new SimpleSnippetDriver[Int, String] with DslOps {
+      def foo(x: Rep[Int]): Rep[String] = {
+        unsafeReflect(elms.core.Op.Custom("hello", elms.core.STRING), x, "world")
+      }
+
+      def snippet(x: Rep[Int]): Rep[String] = foo(x)
+    }
+    check("custom-op", snippet.code)
+  }
 }

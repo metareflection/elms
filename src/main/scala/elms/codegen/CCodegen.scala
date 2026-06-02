@@ -107,6 +107,7 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
 
     case View.Let(x, _ty, e1, e2) =>
       inferType(env)(e1).flatMap { ty1 => inferType(env + (x -> ty1))(e2) }
+    case View.Custom(name, ty, e) => Some(ty)
 
     case View.IfThenElse(_, tthen, telse) =>
       (inferType(env)(tthen), inferType(env)(telse)) match {
@@ -222,6 +223,10 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
         out.emitArgTerms(env)(args)
       }
 
+      case View.Custom(name, ty, args) => {
+        out.emit(name)
+        out.emitArgTerms(env)(args)
+      }
       case View.Negate(t) => {
         out.emit("-")
         out.emitMaybeParenthesizedExpr(env)(t)

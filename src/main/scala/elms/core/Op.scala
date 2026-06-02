@@ -56,4 +56,6 @@ object Op {
 
   case class StructGet(val repr: StructRepr, val field: String) extends Effectful
   case class StructSet(val field: String) extends Effectful
+
+  case class Custom(val name: String, val ty: Type) extends Effectful
 }
