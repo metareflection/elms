@@ -12,6 +12,13 @@ import elms.codegen.CCodegen
 class StructTests extends SnapshotFunSuite {
   val under = "cstruct/"
 
+  override def check(
+      label: String,
+      actual: String,
+      ext: String = "c",
+      accept: Boolean = false
+  ) = super.check(label, actual, ext, accept)
+
   abstract class DslDriverC[A: Typable, B: Typable]
       extends OptimizingSnippetDriver[A, B](Seq()) with DslOps {
     override val codegen = CCodegen()
@@ -21,18 +28,14 @@ class StructTests extends SnapshotFunSuite {
 
   test("get") {
     object Snippet extends DslDriverC[Foo, Int] with DslOps {
-      def snippet(s: Rep[Foo]): Rep[Int] = {
-        s.get("x").asInstanceOf[Rep[Int]]
-      }
+      def snippet(s: Rep[Foo]): Rep[Int] = { s.get("x").asInstanceOf[Rep[Int]] }
     }
     check("get", Snippet.code)
   }
 
   test("set") {
     object Snippet extends DslDriverC[Foo, Unit] with DslOps {
-      def snippet(s: Rep[Foo]): Rep[Unit] = {
-        s.set("x", 6)
-      }
+      def snippet(s: Rep[Foo]): Rep[Unit] = { s.set("x", 6) }
     }
     check("set", Snippet.code)
   }
