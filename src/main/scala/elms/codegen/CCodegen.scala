@@ -87,11 +87,11 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
 
   extension (t: Term)
     private def isSimpleExpr: Boolean = t match {
-      case V(_) | E(_: Const[_], Nil) => true
-      case View.Extractors.ArrayGet(_, _)        => true
-      case View.Extractors.ArrayLength(_)        => true
-      case View.Extractors.App(_, _)             => true
-      case _                          => false
+      case V(_) | E(_: Const[_], Nil)     => true
+      case View.Extractors.ArrayGet(_, _) => true
+      case View.Extractors.ArrayLength(_) => true
+      case View.Extractors.App(_, _)      => true
+      case _                              => false
     }
 
   private type Env = Map[Name, Type]
@@ -103,11 +103,13 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
   private def inferType(env: Env)(term: Term): Option[Type] = View.view(term).flatMap {
     case View.V(name) => env.get(name)
 
-    case const@View.Const(_) => Some(const.prim)
+    case const @ View.Const(_) => Some(const.prim)
 
-    case View.Let(x, _ty, e1, e2) =>
-      inferType(env)(e1).flatMap { ty1 => inferType(env + (x -> ty1))(e2) }
     case View.Custom(name, ty, e) => Some(ty)
+
+    case View.Let(x, _ty, e1, e2) => inferType(env)(e1).flatMap { ty1 =>
+        inferType(env + (x -> ty1))(e2)
+      }
 
     case View.IfThenElse(_, tthen, telse) =>
       (inferType(env)(tthen), inferType(env)(telse)) match {
@@ -147,21 +149,22 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
 
     case View.Function(arg, inty, outty, _) => Some(ARROW(inty, outty))
 
-      case View.StringLength(_) => Some(INT)
-      case View.StringCharAt(_, _) => Some(CHAR)
-      case View.StringDrop(_, _) => Some(STRING)
-      case View.StringTake(_, _) => Some(STRING)
-      case View.StringStartsWith(_, _) => Some(BOOL)
-      case View.StringEndsWith(_, _) => Some(BOOL)
-      case View.StringSubstring(_, _, _) => Some(STRING)
+    case View.Print(_) | View.Println(_) => Some(UNIT)
+
+    case View.StringLength(_)          => Some(INT)
+    case View.StringCharAt(_, _)       => Some(CHAR)
+    case View.StringDrop(_, _)         => Some(STRING)
+    case View.StringTake(_, _)         => Some(STRING)
+    case View.StringStartsWith(_, _)   => Some(BOOL)
+    case View.StringEndsWith(_, _)     => Some(BOOL)
+    case View.StringSubstring(_, _, _) => Some(STRING)
   }
 
-  private def functionType(fdef: Function): Type =
-    ARROW(fdef.inty, fdef.outty)
+  private def functionType(fdef: Function): Type = ARROW(fdef.inty, fdef.outty)
 
   extension (out: IndentedWriter)
-    private inline def withView(t: Term)(k: View => Unit): Unit =
-      View.view(t).fold { out.invalidTerm(s"Got invalid expression term: $t") }(k)
+    private inline def withView(t: Term)(k: View => Unit): Unit = View.view(t)
+      .fold { out.invalidTerm(s"Got invalid expression term: $t") }(k)
 
     private def invalidTerm(msg: String): Unit = {
       Log.error(msg)
@@ -216,7 +219,7 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
     private def emitExpr(env: Env)(term: Term): Unit = out.withView(term) {
       case View.V(name) => out.emit(name.render(cfg.varPrefix))
 
-      case const@View.Const(_) => out.emit(const.value.render(using const.prim))
+      case const @ View.Const(_) => out.emit(const.value.render(using const.prim))
 
       case View.App(f, args) => {
         out.emitMaybeParenthesizedExpr(env)(f)
@@ -227,6 +230,7 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
         out.emit(name)
         out.emitArgTerms(env)(args)
       }
+
       case View.Negate(t) => {
         out.emit("-")
         out.emitMaybeParenthesizedExpr(env)(t)
@@ -320,12 +324,24 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
       case View.Function(_, _, _, _) => out
           .invalidTerm(s"C backend does not support anonymous functions/lambdas: $term")
 
-      case View.StringLength(_) => ???
-      case View.StringCharAt(_, _) => ???
-      case View.StringDrop(_, _) => ???
-      case View.StringTake(_, _) => ???
-      case View.StringStartsWith(_, _) => ???
-      case View.StringEndsWith(_, _) => ???
+      case View.Print(t) => {
+        out.emit("printf(\"%s\", ")
+        out.emitExpr(env)(t)
+        out.emit(")")
+      }
+
+      case View.Println(t) => {
+        out.emit("printf(\"%s\\n\", ")
+        out.emitExpr(env)(t)
+        out.emit(")")
+      }
+
+      case View.StringLength(_)          => ???
+      case View.StringCharAt(_, _)       => ???
+      case View.StringDrop(_, _)         => ???
+      case View.StringTake(_, _)         => ???
+      case View.StringStartsWith(_, _)   => ???
+      case View.StringEndsWith(_, _)     => ???
       case View.StringSubstring(_, _, _) => ???
     }
 
@@ -404,7 +420,7 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
         out.emitln(";")
       }
 
-      case const@View.Const(_) if const.prim.is(UNIT).isDefined => out.emitln(";")
+      case const @ View.Const(_) if const.prim.is(UNIT).isDefined => out.emitln(";")
 
       case _ => {
         out.emitExpr(env)(term)
@@ -412,47 +428,49 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
       }
     }
 
-    private def emitReturnTerm(env: Env, outty: Type)(term: Term): Unit = out.withView(term) {
-      case View.Let(x, _ty, e1, e2) => {
-        val ty = emitAssign(env)(x, e1).getOrElse(UNIT)
-        out.emitReturnTerm(env + (x -> ty), outty)(e2)
-      }
+    private def emitReturnTerm(env: Env, outty: Type)(term: Term): Unit = out
+      .withView(term) {
+        case View.Let(x, _ty, e1, e2) => {
+          val ty = emitAssign(env)(x, e1).getOrElse(UNIT)
+          out.emitReturnTerm(env + (x -> ty), outty)(e2)
+        }
 
-      case View.IfThenElse(guard, tthen, telse) => {
-        out.emit("if (")
-        out.emitExpr(env)(guard)
-        out.emitln(") {")
-        out.indented { out.emitReturnTerm(env, outty)(tthen) }
-        out.emitln("} else {")
-        out.indented { out.emitReturnTerm(env, outty)(telse) }
-        out.emitln("}")
-      }
+        case View.IfThenElse(guard, tthen, telse) => {
+          out.emit("if (")
+          out.emitExpr(env)(guard)
+          out.emitln(") {")
+          out.indented { out.emitReturnTerm(env, outty)(tthen) }
+          out.emitln("} else {")
+          out.indented { out.emitReturnTerm(env, outty)(telse) }
+          out.emitln("}")
+        }
 
-      case View.RangeForEach(_, _, _, _) => {
-        out.invalidTerm(s"Cannot return the result of a for-loop in C: $term")
-        out.emitln(";")
-        out.emitReturnFallback(outty)
-      }
+        case View.RangeForEach(_, _, _, _) => {
+          out.invalidTerm(s"Cannot return the result of a for-loop in C: $term")
+          out.emitln(";")
+          out.emitReturnFallback(outty)
+        }
 
-      case View.While(_, _) => {
-        out.invalidTerm(s"Cannot return the result of a while-loop in C: $term")
-        out.emitln(";")
-        out.emitReturnFallback(outty)
-      }
+        case View.While(_, _) => {
+          out.invalidTerm(s"Cannot return the result of a while-loop in C: $term")
+          out.emitln(";")
+          out.emitReturnFallback(outty)
+        }
 
-      case View.Function(_, _, _, _) => {
-        out
-          .invalidTerm(s"C backend does not support anonymous functions/lambdas: $term")
-        out.emitln(";")
-        out.emitReturnFallback(outty)
-      }
+        case View.Function(_, _, _, _) => {
+          out.invalidTerm(
+            s"C backend does not support anonymous functions/lambdas: $term"
+          )
+          out.emitln(";")
+          out.emitReturnFallback(outty)
+        }
 
-      case _ => {
-        out.emit("return ")
-        out.emitExpr(env)(term)
-        out.emitln(";")
+        case _ => {
+          out.emit("return ")
+          out.emitExpr(env)(term)
+          out.emitln(";")
+        }
       }
-    }
 
     private def emitReturnFallback(outty: Type): Unit = outty match {
       case UNIT       => out.emitln("return;")

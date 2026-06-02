@@ -194,6 +194,16 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
         out.emitMaybeParenthesized(arr)
         out.emit(".length")
       }
+      case View.Print(t) => {
+        out.emit("print(")
+        out.emitTerm(t)
+        out.emit(")")
+      }
+      case View.Println(t) => {
+        out.emit("println(")
+        out.emitTerm(t)
+        out.emit(")")
+      }
       case View.StringLength(s) => {
         out.emitMaybeParenthesized(s)
         out.emit(".length")

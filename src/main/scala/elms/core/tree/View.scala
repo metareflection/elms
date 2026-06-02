@@ -66,6 +66,7 @@ object View {
   final case class Custom(name: String, ty: Type, args: Seq[Term]) extends View {
     def into: Term = E(Op.Custom(name, ty), args)
   }
+
   final case class App(f: Term, args: Seq[Term]) extends View {
     def into: Term = E(Op.App, f +: args)
   }
@@ -171,6 +172,14 @@ object View {
     def into: Term = E(Op.ArrayLength, Seq(t))
   }
 
+  final case class Print(t: Term) extends View {
+    def into: Term = E(Op.Print, Seq(t))
+  }
+
+  final case class Println(t: Term) extends View {
+    def into: Term = E(Op.Println, Seq(t))
+  }
+
   final case class StringLength(t: Term) extends View {
     def into: Term = E(Op.StringLength, Seq(t))
   }
@@ -206,7 +215,6 @@ object View {
   final case class StructSet(t: Term, field: String, v: Term) extends View {
     def into: Term = E(Op.StructSet(field), Seq(t, v))
   }
-
 
   private def packConst[A](c: Op.Const[A])(using aprim: Primitive[A]): View =
     Const(c.v)(using aprim)
@@ -276,6 +284,9 @@ object View {
     case E(Op.ArraySet, s)     => arity3("ArraySet", s).map(ArraySet(_, _, _))
     case E(Op.ArrayLength, s)  => arity1("ArrayLength", s).map(ArrayLength(_))
 
+    case E(Op.Print, s)   => arity1("Print", s).map(Print(_))
+    case E(Op.Println, s) => arity1("Println", s).map(Println(_))
+
     case E(Op.StringLength, s)     => arity1("StringLength", s).map(StringLength(_))
     case E(Op.StringTake, s)       => arity2("StringTake", s).map(StringTake(_, _))
     case E(Op.StringDrop, s)       => arity2("StringDrop", s).map(StringDrop(_, _))
@@ -313,6 +324,7 @@ object View {
       def unapply(t: Term): Option[(String, Type, Seq[Term])] = View.view(t)
         .collect { case View.Custom(name, ty, args) => (name, ty, args) }
     }
+
     object App {
       def apply(f: Term, args: Seq[Term]): Term = View.App(f, args).into
       def unapply(t: Term): Option[(Term, Seq[Term])] = View.view(t)
@@ -474,6 +486,19 @@ object View {
       def apply(t: Term): Term = View.ArrayLength(t).into
       def unapply(t: Term): Option[Term] = View.view(t)
         .collect { case View.ArrayLength(e) => e }
+    }
+
+    object Print {
+      def apply(t: Term): Term = View.Print(t).into
+      def unapply(t: Term): Option[Term] = View.view(t).collect { case View.Print(e) =>
+        e
+      }
+    }
+
+    object Println {
+      def apply(t: Term): Term = View.Println(t).into
+      def unapply(t: Term): Option[Term] = View.view(t)
+        .collect { case View.Println(e) => e }
     }
 
     object StringLength {

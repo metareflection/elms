@@ -32,6 +32,9 @@ object Op {
   case object And extends Control
   case object Or extends Control
 
+  case object Print extends Effectful
+  case object Println extends Effectful
+
   case object StringLength extends Pure
   case object StringTake extends Pure
   case object StringDrop extends Pure
