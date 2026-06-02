@@ -128,7 +128,7 @@ private class FunctionBuilder(
       inty: Type,
       outty: Type,
       body: Builder.Handle
-  ): Unit = regions.push(name, cls, Lambda(arg, outty, inty, body.asStmt))
+  ): Unit = regions.push(name, cls, Lambda(arg, inty, outty, body.asStmt))
 
   def reflect(op: Op, children: Seq[Builder.Handle]): Builder.Handle = op match {
     case pure: Op.Pure     => reflectPure(pure, children.map(_.unwrap))

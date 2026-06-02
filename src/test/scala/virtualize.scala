@@ -204,4 +204,13 @@ class VirtualizeTests extends SnapshotFunSuite {
     }
     check("custom-op", snippet.code)
   }
+
+  test("lambdas") {
+    val snippet = new SimpleSnippetDriver[Int, Unit] with DslOps {
+      def foo(x: Rep[Int]): Rep[Unit] = Builtins.println(x + 3)
+
+      def snippet(x: Rep[Int]): Rep[Unit] = lam(foo)(x)
+    }
+    check("lambda", snippet.code, accept=true)
+  }
 }

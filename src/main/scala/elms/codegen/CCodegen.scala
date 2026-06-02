@@ -67,8 +67,7 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
     case c                => c.toString
   }
 
-  extension (ty: Type)
-    private def render: String = ty match {
+  protected def renderType(ty: Type): String = ty match {
       case UNIT         => "void"
       case INT          => "int"
       case BOOL         => "bool"
@@ -76,10 +75,15 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
       case STRING       => "const char *"
       case ARRAY(t)     => s"${t.render} *"
       case STRUCT(repr) => s"struct ${repr.name} *"
+      case _ => {
+        Log.error(s"Attempted to render unsupported type $ty")
+        s"/* Unsupported type $ty */ ???"
+      }
     }
 
+  extension (ty: Type)
+    private def render: String = renderType(ty)
     private def renderParam: String = ty.render
-
     private def renderElement: String = ty match {
       case ARRAY(t) => t.render
       case _        => ty.render

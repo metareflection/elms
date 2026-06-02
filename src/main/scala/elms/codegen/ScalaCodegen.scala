@@ -29,15 +29,20 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
       case STRING => s"\"$x\""
     }
 
-  extension (ty: Type)
-    private def render: String = ty match {
-      case UNIT     => "Unit"
-      case INT      => "Int"
-      case BOOL     => "Boolean"
-      case CHAR     => "Char"
-      case STRING   => "String"
-      case ARRAY(t) => s"Array[${t.render}]"
+  protected def renderType(ty: Type): String = ty match {
+    case UNIT     => "Unit"
+    case INT      => "Int"
+    case BOOL     => "Boolean"
+    case CHAR     => "Char"
+    case STRING   => "String"
+    case ARRAY(t) => s"Array[${t.render}]"
+    case _        => {
+      Log.error(s"Attempted to render unsupported type $ty")
+      s"/* Unsupported type $ty */ ???"
     }
+  }
+
+  extension (ty: Type) private def render: String = renderType(ty)
 
   extension (out: IndentedWriter)
     private def invalidTerm(msg: String): Unit = {
@@ -59,8 +64,8 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
     private def emitMaybeParenthesized(t: Term): Unit = {
       val (l, r) = t match {
         case V(_) | E(_: Const[_], Nil) => ("", "")
-        case Let(_,_,_) => ("{", "}")
-        case _ => ("(", ")")
+        case Let(_, _, _)               => ("{", "}")
+        case _                          => ("(", ")")
       }
       out.emit(l)
       out.emitTerm(t)
@@ -69,8 +74,8 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
 
     private def emitAsExpr(t: Term): Unit = {
       val (l, r) = t match {
-        case Let(_,_,_) => ("{", "}")
-        case _ => ("", "")
+        case Let(_, _, _) => ("{", "}")
+        case _            => ("", "")
       }
       out.emit(l)
       out.emitTerm(t)
@@ -78,12 +83,20 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
     }
 
     private def emitTerm(term: Term): Unit = ast.view(term).map({
-      case View.V(name)                    => out.emit(name.render(cfg.varPrefix))
+      case View.V(name)               => out.emit(name.render(cfg.varPrefix))
       case View.Let(x, mutTy, e1, e2) => {
-        mutTy match {
-          case Some(ty) => out.emit(s"var ${x.render(cfg.varPrefix)}: ${ty.render} = ")
-          case None     => out.emit(s"val ${x.render(cfg.varPrefix)} = ")
+        // CR cwong: This sucks. Instead, we should use the same `inferType`
+        // mechanism as CCodegen to determine whether the RHS is a function type.
+        val (vkd, annotation) = mutTy match {
+          case Some(ty) => ("var", s": ${ty.render}")
+          case None     => e1 match {
+              case Function(_, inty, outty, _) =>
+                ("lazy val", s": (${inty.render} => ${outty.render})")
+              case _ => ("val", "")
+            }
         }
+
+        out.emit(s"$vkd ${x.render(cfg.varPrefix)}$annotation = ")
         out.emitAsExpr(e1)
         out.emitln("")
         out.emitTerm(e2)
@@ -95,7 +108,7 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
         out.indented { out.emitTerm(body) }
         out.emitln("}")
       }
-      case const@View.Const(_) => out.emit(const.value.render(using const.prim))
+      case const @ View.Const(_) => out.emit(const.value.render(using const.prim))
       case View.Custom(name, _ty, args) => {
         out.emit(name)
         out.emitArgTerms(args)
@@ -105,8 +118,8 @@ class ScalaCodegen(cfg: Config = Config.scalaDefault) extends Backend(cfg) {
       // CR-soon cwong: This is likely subtly broken in the case that the `Var`
       // under inspection comes from something like a `Rep[Array[Var[T]]]`.
       case View.VarNew(ty, v) => ???
-      case View.VarGet(x)    => out.emitTerm(x)
-      case View.VarSet(x, v) => {
+      case View.VarGet(x)     => out.emitTerm(x)
+      case View.VarSet(x, v)  => {
         out.emitTerm(x)
         out.emit(" = ")
         out.emitMaybeParenthesized(v)
