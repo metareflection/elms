@@ -34,7 +34,7 @@ class AutomataTest extends SnapshotFunSuite {
     assertResult(true){p.matches("AACAABAAC")}
 
     // The generated code for the DFA is shown at the end.
-    check("aab", p.code, accept=true)
+    check("aab", p.code)
   }
 }
 
