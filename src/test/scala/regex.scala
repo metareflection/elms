@@ -27,8 +27,8 @@ class RegexTest extends SnapshotFunSuite {
     /* search for restart of regexp at start of text */
     def matchhere(regexp: String, restart: Int, text: String, start: Int): Boolean = {
       if (restart == regexp.length) true
-      else if (regexp(restart) == '$' && restart + 1 == regexp.length) start ==
-        text.length
+      else if (regexp(restart) == '$' && restart + 1 == regexp.length)
+        start == text.length
       else if (restart + 1 < regexp.length && regexp(restart + 1) == '*')
         matchstar(regexp(restart), regexp, restart + 2, text, start)
       else if (start < text.length && matchchar(regexp(restart), text(start)))
@@ -84,9 +84,9 @@ class RegexTest extends SnapshotFunSuite {
       if restart == regexp.length then true
       else if (regexp.charAt(restart) == '$' && restart + 1 == regexp.length) then
         start === text.length
-      else if (restart + 1 < regexp.length && regexp.charAt(restart + 1) == '*') then {
+      else if (restart + 1 < regexp.length && regexp.charAt(restart + 1) == '*') then
         matchstar(regexp.charAt(restart), regexp, restart + 2, text, start)
-      } else if (start < text.length && matchchar(regexp.charAt(restart), text(start)))
+      else if (start < text.length && matchchar(regexp.charAt(restart), text(start)))
       then matchhere(regexp, restart + 1, text, start + 1)
       else false
     }

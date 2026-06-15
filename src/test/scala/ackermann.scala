@@ -8,7 +8,12 @@ import elms.prelude.given
 @virtualize
 trait Ackermann extends DslOps {
   def a(m: Int): Rep[Int => Int] = fun { (n: Rep[Int]) =>
-    if m == 0 then n + 1 else if n === 0 then a(m - 1)(1) else a(m - 1)(a(m)(n - 1))
+    if m == 0 then
+      n + 1
+    else if n === 0 then
+      a(m - 1)(1)
+    else
+      a(m - 1)(a(m)(n - 1))
   }
 }
 
