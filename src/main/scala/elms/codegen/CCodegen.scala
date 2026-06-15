@@ -23,6 +23,8 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
     prog.staticData.foreach { (name, data) => w.emitNamedStaticData(name, data) }
     if prog.staticData.nonEmpty then w.emitln("")
 
+    prog.functions.foreach { (fname, fdef) => w.emitFunctionHeader(fname, fdef) }
+
     val topEnv: Env = prog.functions.map { (fname, fdef) =>
       fname -> functionType(fdef)
     }.toMap
@@ -167,6 +169,13 @@ class CCodegen(cfg: Config = Config.cDefault) extends Backend(cfg) {
   private def functionType(fdef: Function): Type = ARROW(fdef.inty, fdef.outty)
 
   extension (out: IndentedWriter)
+    // CR cwong: merge this with `emitFunction`
+    private inline def emitFunctionHeader(fname: Name, fdef: Function): Unit = {
+      val Function(arg, inty, outty, body) = fdef
+      val argsS = renderArgs(arg, inty)
+      out.emitln(s"${outty.render} ${fname.render(cfg.varPrefix)}($argsS);")
+    }
+
     private inline def withView(t: Term)(k: View => Unit): Unit = View.view(t)
       .fold { out.invalidTerm(s"Got invalid expression term: $t") }(k)
 
