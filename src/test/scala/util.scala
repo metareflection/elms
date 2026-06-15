@@ -25,6 +25,8 @@ trait EvalScalaSnippet[A: Typable, B: Typable] extends SnippetDriver[A, B] {
     * codegen how to print a custom `Type` (e.g. `DFAStateT`). */
   protected def extraRenderType: PartialFunction[Type, String] = PartialFunction.empty
 
+  protected def scalacOptions: Seq[String] = Seq()
+
   // baseIndentLevel = 2 keeps the body nested inside `object $name { ... }`.
   override val codegen =
     new ScalaCodegen(Config.scalaDefault.copy(baseIndentLevel = 2)) {
@@ -63,13 +65,9 @@ trait EvalScalaSnippet[A: Typable, B: Typable] extends SnippetDriver[A, B] {
     val cp = sys.props("generated.test.classpath")
 
     val args =
-      Seq(
-        // generated code may reference @experimental definitions from the test
-        // classpath (e.g. types defined under the project's -experimental build)
-        "-experimental",
-        "-classpath", cp,
-        "-d", outDir.toString
-      ) ++ sourceFiles.map(_.toString)
+      scalacOptions ++
+        Seq("-classpath", cp, "-d", outDir.toString) ++
+        sourceFiles.map(_.toString)
 
     val exit = dotty.tools.dotc.Main.process(args.toArray)
 

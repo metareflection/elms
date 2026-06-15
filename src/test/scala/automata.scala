@@ -171,6 +171,7 @@ abstract class AutomataDriver
   override protected def extraRenderType: PartialFunction[Type, String] = {
     case DFAStateT => "Automaton[Char, Boolean]"
   }
+  override protected def scalacOptions = Seq("-experimental")
 
   def matches(input: String): Boolean = {
     var state = eval(())
