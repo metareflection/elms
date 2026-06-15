@@ -74,24 +74,23 @@ class ShonanTest extends SnapshotFunSuite {
 
   test("shonan-hmm1c") {
     object Snippet extends DslDriver[Array[Int], Array[Int]] {
-      def snippet(v: Rep[Array[Int]]) = {
+      def matrix_vector_prod(a0: Array[Array[Int]], v: Rep[Array[Int]]) = {
+        val n = a0.length
+        val v1 = newArray[Int](n)
 
-        def matrix_vector_prod(a0: Array[Array[Int]], v: Rep[Array[Int]]) = {
-          val n = a0.length
-          val v1 = newArray[Int](n)
-
-          for (i <- (0 `until` n): Range) {
-            val sparse = a0(i).count(_ != 0) < 3
-            if (sparse) {
-              for (j <- (0 `until` n): Range) { v1(i) = v1(i) + a0(i)(j) * v(j) }
-            } else {
-              val ai = staticData(a0(i))
-              for (j <- (0 `until` n): Rep[Range]) { v1(i) = v1(i) + ai(j) * v(j) }
-            }
+        for (i <- (0 `until` n): Range) {
+          val sparse = a0(i).count(_ != 0) < 3
+          if (sparse) {
+            for (j <- (0 `until` n): Range) { v1(i) = v1(i) + a0(i)(j) * v(j) }
+          } else {
+            val ai = staticData(a0(i))
+            for (j <- (0 `until` n): Rep[Range]) { v1(i) = v1(i) + ai(j) * v(j) }
           }
-          v1
         }
+        v1
+      }
 
+      def snippet(v: Rep[Array[Int]]) = {
         val v1 = matrix_vector_prod(a, v)
         v1
       }
@@ -101,33 +100,30 @@ class ShonanTest extends SnapshotFunSuite {
 
   test("shonan-hmm1d") {
     object Snippet extends DslDriver[Array[Int], Array[Int]] {
-      // XXX: We could avoid needing to define this if we were a bit less
-      // cute with `unrollIf` below.
       trait UnrollIf {
         def foreach(f: Rep[Int] => Rep[Unit]): Rep[Unit]
       }
 
+      def unrollIf(sparse: Boolean, r: Range) = new UnrollIf {
+        def foreach(f: Rep[Int] => Rep[Unit]): Rep[Unit] = {
+          if (sparse) for (j <- (r.start `until` r.end): Range) f(j)
+          else for (j <- (r.start `until` r.end): Rep[Range]) f(j)
+        }
+      }
+
+      def matrix_vector_prod(a0: Array[Array[Int]], v: Rep[Array[Int]]) = {
+        val n = a0.length
+        val v1 = newArray[Int](n)
+
+        for (i <- (0 `until` n): Range) {
+          val sparse = a0(i).count(_ != 0) < 3
+          val ai = staticData(a0(i))
+          for (j <- unrollIf(sparse, 0 `until` n)) { v1(i) = v1(i) + ai(j) * v(j) }
+        }
+        v1
+      }
+
       def snippet(v: Rep[Array[Int]]) = {
-
-        def unrollIf(sparse: Boolean, r: Range) = new UnrollIf {
-          def foreach(f: Rep[Int] => Rep[Unit]): Rep[Unit] = {
-            if (sparse) for (j <- (r.start `until` r.end): Range) f(j)
-            else for (j <- (r.start `until` r.end): Rep[Range]) f(j)
-          }
-        }
-
-        def matrix_vector_prod(a0: Array[Array[Int]], v: Rep[Array[Int]]) = {
-          val n = a0.length
-          val v1 = newArray[Int](n)
-
-          for (i <- (0 `until` n): Range) {
-            val sparse = a0(i).count(_ != 0) < 3
-            val ai = staticData(a0(i))
-            for (j <- unrollIf(sparse, 0 `until` n)) { v1(i) = v1(i) + ai(j) * v(j) }
-          }
-          v1
-        }
-
         val v1 = matrix_vector_prod(a, v)
         v1
       }
