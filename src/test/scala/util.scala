@@ -69,7 +69,9 @@ trait EvalScalaSnippet[A: Typable, B: Typable] extends SnippetDriver[A, B] {
         Seq("-classpath", cp, "-d", outDir.toString) ++
         sourceFiles.map(_.toString)
 
-    val exit = dotty.tools.dotc.Main.process(args.toArray)
+    val reporter = dotty.tools.dotc.Main.process(args.toArray)
+    if reporter.hasErrors then
+      throw new RuntimeException(s"failed to compile generated snippet `$name`")
 
     CompiledDir(outDir)
   }
