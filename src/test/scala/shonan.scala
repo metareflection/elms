@@ -30,7 +30,9 @@ class ShonanTest extends SnapshotFunSuite {
       val v1 = new Array[Int](n)
 
       for (i <- (0 until n)) {
-        for (j <- (0 until n)) { v1(i) = v1(i) + a(i)(j) * v(j) }
+        for (j <- (0 until n)) {
+          v1(i) = v1(i) + a(i)(j) * v(j)
+        }
       }
       v1
     }
@@ -81,10 +83,14 @@ class ShonanTest extends SnapshotFunSuite {
         for (i <- (0 `until` n): Range) {
           val sparse = a0(i).count(_ != 0) < 3
           if (sparse) {
-            for (j <- (0 `until` n): Range) { v1(i) = v1(i) + a0(i)(j) * v(j) }
+            for (j <- (0 `until` n): Range) {
+              v1(i) = v1(i) + a0(i)(j) * v(j)
+            }
           } else {
             val ai = staticData(a0(i))
-            for (j <- (0 `until` n): Rep[Range]) { v1(i) = v1(i) + ai(j) * v(j) }
+            for (j <- (0 `until` n): Rep[Range]) {
+              v1(i) = v1(i) + ai(j) * v(j)
+            }
           }
         }
         v1
@@ -118,7 +124,9 @@ class ShonanTest extends SnapshotFunSuite {
         for (i <- (0 `until` n): Range) {
           val sparse = a0(i).count(_ != 0) < 3
           val ai = staticData(a0(i))
-          for (j <- unrollIf(sparse, 0 `until` n)) { v1(i) = v1(i) + ai(j) * v(j) }
+          for (j <- unrollIf(sparse, 0 `until` n)) {
+            v1(i) = v1(i) + ai(j) * v(j)
+          }
         }
         v1
       }
