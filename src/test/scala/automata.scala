@@ -28,7 +28,7 @@ class AutomataTest extends SnapshotFunSuite {
       }
     }
 
-    // CR cwong: make this work!
+    // CR cwong: make dynamic loading work!
     /*
     // Some tests.
     assertResult(true){p.matches("AAB")}
