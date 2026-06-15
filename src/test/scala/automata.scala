@@ -6,7 +6,6 @@ import elms.prelude.*
 import elms.prelude.given
 
 import elms.core.{Op, Type, Typable}
-import elms.codegen.ScalaCodegen
 
 class AutomataTest extends SnapshotFunSuite {
   val under = "nfa/"
@@ -28,14 +27,11 @@ class AutomataTest extends SnapshotFunSuite {
       }
     }
 
-    // CR cwong: make dynamic loading work!
-    /*
     // Some tests.
     assertResult(true){p.matches("AAB")}
     assertResult(false){p.matches("AAC")}
     assertResult(true){p.matches("AACAAB")}
     assertResult(true){p.matches("AACAABAAC")}
-    */
 
     // The generated code for the DFA is shown at the end.
     check("aab", p.code, accept=true)
@@ -164,11 +160,25 @@ trait NFAtoDFA extends NFAOps with DFAOps {
 }
 
 abstract class AutomataDriver
-    extends SimpleSnippetDriver[Unit, Automaton[Char, Boolean]] with DFAOps {
-  override val codegen = new ScalaCodegen {
-    override protected def renderType(ty: Type): String = ty match {
-      case DFAStateT => "Automaton[Char, Boolean]"
-      case _ => super.renderType(ty)
+    extends SimpleSnippetDriver[Unit, Automaton[Char, Boolean]]
+    with DFAOps
+    with EvalScalaSnippet[Unit, Automaton[Char, Boolean]] {
+
+  val prefix = "automata-test"
+  val name = "Dfa"
+
+  override protected def imports = Seq("elms.test.Automaton")
+  override protected def extraRenderType: PartialFunction[Type, String] = {
+    case DFAStateT => "Automaton[Char, Boolean]"
+  }
+
+  def matches(input: String): Boolean = {
+    var state = eval(())
+    var found = state.out
+    for (c <- input) {
+      state = state.next(c)
+      found = found || state.out
     }
+    found
   }
 }
