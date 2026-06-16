@@ -135,7 +135,7 @@ class RegexTest extends SnapshotFunSuite {
   def testmatch(regexp: String, text: String, expected: Boolean) = {
     test(s"""matchsearch("$regexp", "$text") == $expected""") {
       val snippet = getOrBuild(regexp)
-      assertResult(expected) { snippet.eval(classOf[String], text) }
+      assertResult(expected) { snippet.eval(text) }
       check(sanitize(regexp), snippet.code)
     }
   }
