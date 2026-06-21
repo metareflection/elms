@@ -205,14 +205,14 @@ class RegexTest extends SnapshotFunSuite {
       cache(regexp)
     }
 
-  def testmatch_interp(regexp: String, text: String, expected: Boolean) = {
-    test(s"""interp_matchsearch("$regexp", "$text") == $expected""") {
+  def testmatch_interp(regexp: String, text: String, expected: Boolean, headline: String) = {
+    test("interp_"+headline) {
       assertResult(expected) { Matcher.matchsearch(regexp, text) }
     }
   }
 
-  def testmatch_staged(regexp: String, text: String, expected: Boolean) = {
-    test(s"""staged_matchsearch("$regexp", "$text") == $expected""") {
+  def testmatch_staged(regexp: String, text: String, expected: Boolean, headline: String) = {
+    test("staged_"+headline) {
       val snippet = getOrBuild(regexp)
       assertResult(expected) { snippet.eval(text) }
       check(sanitize(regexp), snippet.code)
@@ -240,8 +240,8 @@ class RegexTest extends SnapshotFunSuite {
     snippet.invoke(cls.getField("MODULE$").get(null), text).asInstanceOf[Boolean]
   }
 
-  def testmatch_emit(regexp: String, text: String, expected: Boolean) = {
-    test(s"""emitter_matchsearch("$regexp", "$text") == $expected""") {
+  def testmatch_emit(regexp: String, text: String, expected: Boolean, headline: String) = {
+    test("emitter_"+headline) {
       val name = sanitize(regexp) + "_emit"
       val code = new CompilerEmitter().compile(regexp)
       assertResult(expected) { evalEmitted(name, code, text) }
@@ -250,9 +250,10 @@ class RegexTest extends SnapshotFunSuite {
   }
 
   def testall(regexp: String, text: String, expected: Boolean) = {
-    testmatch_interp(regexp, text, expected)
-    testmatch_staged(regexp, text, expected)
-    testmatch_emit(regexp, text, expected)
+    val headline = s"""matchsearch("$regexp", "$text") == $expected""""
+    testmatch_interp(regexp, text, expected, headline)
+    testmatch_staged(regexp, text, expected, headline)
+    testmatch_emit(regexp, text, expected, headline)
   }
 
   testall("^hello$", "hello", true)
