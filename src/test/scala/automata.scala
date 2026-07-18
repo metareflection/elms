@@ -148,6 +148,8 @@ trait NFAtoDFA extends NFAOps with DFAOps {
       case C(c1) => c === c1
       case W     => unit(true)
     }
+    // s1 knowing s2
+    // what remains of s1 once you know the current char matches s2
     def knowing(s2: CharSet): Option[CharSet] = (s1, s2) match {
       case (W, _)                     => Some(W)
       case (C(c1), C(c2)) if c1 == c2 => Some(W)
