@@ -25,7 +25,12 @@ class RegexTest extends SnapshotFunSuite {
     }
 
     /* search for restart of regexp at start of text */
-    def matchhere(regexp: String, restart: Int, text: String, start: Int): Boolean = {
+    def matchhere(
+      regexp: String,
+      restart: Int,
+      text: String,
+      start: Int
+    ): Boolean = {
       if (restart == regexp.length) true
       else if (regexp(restart) == '$' && restart + 1 == regexp.length)
         start == text.length
