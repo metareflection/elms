@@ -3,5 +3,6 @@
 .bloop/
 project/*
 !project/plugins.sbt
+!project/build.properties
 target/
 src/out/**/*.actual.*
