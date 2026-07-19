@@ -80,15 +80,15 @@ class ShonanTest extends SnapshotFunSuite {
         val n = a0.length
         val v1 = newArray[Int](n)
 
-        for (i <- (0 until n): Range) {
+        for (i <- (0 `until` n): Range) {
           val sparse = a0(i).count(_ != 0) < 3
           if (sparse) {
-            for (j <- (0 until n): Range) {
+            for (j <- (0 `until` n): Range) {
               v1(i) = v1(i) + a0(i)(j) * v(j)
             }
           } else {
             val ai = staticData(a0(i))
-            for (j <- (0 until n): Rep[Range]) {
+            for (j <- (0 `until` n): Rep[Range]) {
               v1(i) = v1(i) + ai(j) * v(j)
             }
           }
@@ -112,8 +112,8 @@ class ShonanTest extends SnapshotFunSuite {
 
       def unrollIf(sparse: Boolean, r: Range) = new UnrollIf {
         def foreach(f: Rep[Int] => Rep[Unit]): Rep[Unit] = {
-          if (sparse) for (j <- (r.start until r.end): Range) f(j)
-          else for (j <- (r.start until r.end): Rep[Range]) f(j)
+          if (sparse) for (j <- (r.start `until` r.end): Range) f(j)
+          else for (j <- (r.start `until` r.end): Rep[Range]) f(j)
         }
       }
 
@@ -121,10 +121,10 @@ class ShonanTest extends SnapshotFunSuite {
         val n = a0.length
         val v1 = newArray[Int](n)
 
-        for (i <- (0 until n): Range) {
+        for (i <- (0 `until` n): Range) {
           val sparse = a0(i).count(_ != 0) < 3
           val ai = staticData(a0(i))
-          for (j <- unrollIf(sparse, 0 until n)) {
+          for (j <- unrollIf(sparse, 0 `until` n)) {
             v1(i) = v1(i) + ai(j) * v(j)
           }
         }
