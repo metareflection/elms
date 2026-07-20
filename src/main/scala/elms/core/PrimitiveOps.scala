@@ -1,42 +1,17 @@
 package elms.core
 
-import annotation.implicitNotFound
-
-import elms.runtime.*
-import elms.core
 import elms.core.Op._
 
-trait PrimitiveOps extends Base {
+trait PrimitiveOps extends Base with poly.PrimitiveOps {
   def __ifThenElse[T](c: Rep[Boolean], t: => Rep[T], e: => Rep[T]): Rep[T] =
     unsafeReflect(IfThenElse, c, region(t), region(e))
 
   def __whileDo(guard: => Rep[Boolean], body: => Rep[Unit]): Rep[Unit] =
     unsafeReflect(While, region(guard), region(body))
 
-  given __virtualizedBoolConvInternal: Conversion[Rep[Boolean], Boolean] with
-    def apply(x: Rep[Boolean]) = {
-      throw new LMSRuntimeException(
-        "attempted to call __virtualizedBoolConvInternal (did you forget to virtualize?)"
-      );
-    }
-
-  trait RepLength[A] {
-    def run(x: Rep[A]): Rep[Int]
-  }
-
-  extension [A](x: Rep[A])(using provider: RepLength[A])
-    def length: Rep[Int] = provider.run(x)
-
-  trait RepApply1[F, Input, Output] {
-    def run(f: Rep[F], x: Rep[Input]): Rep[Output]
-  }
-
-  extension [F, Input, Output](f: Rep[F])(using provider: RepApply1[F, Input, Output])
-    def apply(arg: Rep[Input]): Rep[Output] = provider.run(f, arg)
-
   extension [B](f: Rep[() => B]) def apply(): Rep[B] = unsafeReflect(App, f)
 
-  given [A, B]: RepApply1[A => B, A, B] with
+  given repApply1Fun[A, B]: RepApply1[A => B, A, B] with
     def run(f: Rep[A => B], arg: Rep[A]): Rep[B] = unsafeReflect(App, f, arg)
 
   extension [A1, A2, B](f: Rep[(A1, A2) => B])
@@ -46,6 +21,6 @@ trait PrimitiveOps extends Base {
     def apply(a1: Rep[A1], a2: Rep[A2], a3: Rep[A3]): Rep[B] =
       unsafeReflect(App, f, a1, a2, a3)
 
-  given [A: Primitive](using Typable[A]): Liftable[A] with
+  given liftablePrimitive[A: Primitive](using Typable[A]): Liftable[A] with
     def lift(x: A): Rep[A] = unsafeReflect(Const(x))
 }

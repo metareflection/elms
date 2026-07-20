@@ -1,20 +1,9 @@
 package elms.core
 
-import scala.Conversion
-import annotation.implicitNotFound
+import elms.core.poly.Lift
 
-trait Base {
-  type Rep[+T] <: __Virtualized[T]
+trait Base extends Lift {
   protected type Exp
-
-  @implicitNotFound("${A} cannot be lifted")
-  abstract class Liftable[A: Typable] {
-    def lift(x: A): Rep[A]
-  }
-
-  def unit[A: Liftable](x: A): Rep[A] = summon[Liftable[A]].lift(x)
-  given [A](using w: Liftable[A]): Conversion[A, Rep[A]] with
-    def apply(x: A): Rep[A] = unit(x)
 
   def fun[A: Typable, B: Typable](name: Option[Name])(
       f: Rep[A] => Rep[B]

@@ -5,7 +5,7 @@ import annotation.implicitNotFound
 import elms.runtime.Log
 import elms.core.Op._
 
-trait IntegerOps extends Base {
+trait IntegerOps extends Base with poly.IntegerOps {
   extension (lhs: Rep[Int])
     def +(rhs: Rep[Int]): Rep[Int] = unsafeReflect(Plus, lhs, rhs)
     def -(rhs: Rep[Int]): Rep[Int] = unsafeReflect(Minus, lhs, rhs)
