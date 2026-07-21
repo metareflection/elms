@@ -4,7 +4,7 @@ import elms.core.__Virtualized
 import elms.core.{Primitive, Typable, INT, BOOL, CHAR, UNIT, STRING}
 import elms.core.poly._
 
-class Driver
+trait Driver
     extends HasRep
     with PrimitiveOps
     with BooleanOps
@@ -12,7 +12,8 @@ class Driver
     with IntegerOps
     with RangeOps
     with StringOps
-    with ArrayOps {
+    with ArrayOps
+    with VarOps {
   case class Rep[+T](v: T) extends __Virtualized[T]
 
   // Lift
@@ -106,4 +107,12 @@ class Driver
 
   given arrayLength[A]: RepLength[Array[A]] with
     def run(arr: Rep[Array[A]]): Rep[Int] = Rep(arr.v.length)
+
+  // VarOps
+
+  case class Var[T](var v: T)
+
+  def newVar[T: Typable](initial: Rep[T]): Rep[Var[T]] = Rep(Var(initial.v))
+  def varRead[T](rc: Rep[Var[T]]): Rep[T] = Rep(rc.v.v)
+  def varWrite[T](rc: Rep[Var[T]], v: Rep[T]): Rep[Unit] = Rep(rc.v.v = v.v)
 }

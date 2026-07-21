@@ -5,7 +5,7 @@ import scala.Conversion
 import elms.core.Typable
 
 trait VarOps extends HasRep {
-  case class Var[+T]()
+  type Var[T]
 
   def newVar[T: Typable](initial: Rep[T]): Rep[Var[T]]
   def varRead[T](rc: Rep[Var[T]]): Rep[T]

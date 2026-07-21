@@ -12,4 +12,3 @@ trait DslOps
     with RangeOps
     with StringOps
     with ArrayOps
-    with StructOps
