@@ -1,11 +1,9 @@
-package elms.helpers
+package elms.helpers.poly
 
-import elms.core._
+import elms.core.poly._
 
 trait DslOps
-    extends elms.helpers.poly.DslOps
-    with Base
-    with Builtins
+    extends HasRep
     with PrimitiveOps
     with VarOps
     with BooleanOps
