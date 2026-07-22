@@ -4,7 +4,7 @@ import elms.core.__Virtualized
 import elms.core.{Primitive, Typable, INT, BOOL, CHAR, UNIT, STRING}
 import elms.core.poly._
 
-trait Driver
+trait Interp
     extends HasRep
     with PrimitiveOps
     with BooleanOps
